@@ -28,26 +28,43 @@ SMF100A = rm.open_resource('TCPIP::169.254.2.20::INSTR')
 # SMF100A.write("*RST") # ustawia wartości domyśne generatora i WYŁĄCZA poziom
 print(f"Dane urządzenia:\n{SMF100A.query('*IDN?')}")
 
+SMF100A.write("OUTP:AMOD FIX")  # wyłączenie automatycznego tłumika
+SMF100A.write("SOUR:POW:ATT 0dB")  # ustawienie wartości tłumika
+
 # Podanie poziomu sygnału
 set_level(level)
 
 
 # Przestawianie generatora na częstotliwościach
-def set_frequency(start_freq, stop_freq, step):
+def set_frequency():
+    print("Wprowadź początkową częstotliwość: ")
+    start_freq = int(input())
+    print("Podaj końcową częstotliwość: ")
+    stop_freq = int(input())
+    print("Podaj krok częstotliwości: ")
+    step = int(input())
     SMF100A.write("FREQ:MODE CW")
-    for frequency in range(start_freq, stop_freq+step, step):
+    for frequency in range(start_freq, stop_freq + step, step):
         SMF100A.write(f"FREQ {frequency} MHz")
         time.sleep(0.5)
     # SMF100A.write("FREQ 15GHz")
 
-print("Wprowadź początkową częstotliwość: ")
-start_freq = int(input())
-print("Podaj końcową częstotliwość: ")
-stop_freq = int(input())
-print("Podaj krok częstotliwości: ")
-step = int(input())
 
-set_frequency(start_freq, stop_freq, step)
+def set_frequency_from_file():
+    file = open("frequencies_txt", "r")
+    frequency = file.readline()
+
+    while frequency:
+        if frequency == "\n":
+            break
+        frequency = file.readline()
+        print(f"wartość podana do generatora: {frequency}\n")
+        SMF100A.write(f"FREQ {frequency} MHz")
+        time.sleep(5)
+
+
+# set_frequency() # zdefiniowanie zakresu częstotliwości jako start, stop, step
+set_frequency_from_file() # zdefiniowanie zakresu częstotliwości na podstawie pliku txt
 
 # Close the connection to the instrument
 SMF100A.close()
