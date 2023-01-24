@@ -51,16 +51,16 @@ def set_frequency():
 
 
 def set_frequency_from_file():
-    file = open("frequencies_txt", "r")
-    frequency = file.readline()
+    file = open('frequencies_txt', 'r')
+    frequency = file.read().splitlines()
+    print(f"Częstotliwości wysłane na generator: {frequency} MHz")
 
-    while frequency:
-        if frequency == "\n":
-            break
-        frequency = file.readline()
-        print(f"wartość podana do generatora: {frequency}\n")
-        SMF100A.write(f"FREQ {frequency} MHz")
-        time.sleep(5)
+    for x in range(0, len(frequency), 1):
+        print(f"Częstotliwość nr {x + 1}: {frequency[x]}")
+        SMF100A.write(f"FREQ {frequency[x]} MHz")
+        time.sleep(1)
+
+    file.close()
 
 
 # set_frequency() # zdefiniowanie zakresu częstotliwości jako start, stop, step
