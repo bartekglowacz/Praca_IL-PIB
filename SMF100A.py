@@ -7,7 +7,6 @@ Sposób wprowadzania częstotliwości:
 Użytkownik musi mieć możliwość podania poziomu sygnały w dBuV
 """
 import time
-import numpy as np
 import pyvisa
 
 print("Podaj poziom generowanego sygnału [dBuV]: ")
@@ -32,6 +31,7 @@ def set_frequency():
     wait = float(input())
     SMF100A.write("FREQ:MODE CW")
     for frequency in range(start_freq, stop_freq + step, step):
+        print(f"f = {frequency}")
         SMF100A.write(f"FREQ {frequency} MHz")
         time.sleep(wait/1000)
     # SMF100A.write("FREQ 15GHz")
@@ -44,9 +44,10 @@ def set_frequency_from_file():
     # print(f"Częstotliwości wysłane na generator: {frequency} MHz")
     print("Podaj czas trwania [ms]: ")
     wait = float(input())
+    SMF100A.write("FREQ:MODE CW")
 
     for x in range(0, len(frequency), 1):
-        print("Częstotliwość nr ", x+1, ":", frequency[x].replace(",", "."))
+        print("f", x+1, "=", frequency[x].replace(",", "."))
         frequency[x] = frequency[x].replace(",", ".")
         SMF100A.write(f"FREQ {frequency[x]} MHz")
         time.sleep(wait/1000)
