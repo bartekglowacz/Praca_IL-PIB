@@ -20,6 +20,36 @@ def set_level(level):
     SMF100A.write("OUTP ON")
 
 
+# Przestawianie generatora na częstotliwościach podając star, stop, step
+def set_frequency():
+    print("Wprowadź początkową częstotliwość: ")
+    start_freq = int(input())
+    print("Podaj końcową częstotliwość: ")
+    stop_freq = int(input())
+    print("Podaj krok częstotliwości: ")
+    step = int(input())
+    SMF100A.write("FREQ:MODE CW")
+    for frequency in range(start_freq, stop_freq + step, step):
+        SMF100A.write(f"FREQ {frequency} MHz")
+        time.sleep(0.5)
+    # SMF100A.write("FREQ 15GHz")
+
+
+# Przestawianie generatora na częstotliwościach podając plik txt z częstotliwościami
+def set_frequency_from_file():
+    file = open('frequencies_txt', 'r')
+    frequency = file.read().splitlines()
+    print(f"Częstotliwości wysłane na generator: {frequency} MHz")
+
+    for x in range(0, len(frequency), 1):
+        print("Częstotliwość nr ", x+1, ":", frequency[x].replace(",", "."))
+        frequency[x] = frequency[x].replace(",", ".")
+        SMF100A.write(f"FREQ {frequency[x]} MHz")
+        time.sleep(0.5)
+
+    file.close()
+
+
 # Connect to the signal generator over LAN
 rm = pyvisa.ResourceManager()
 rm.list_resources()
@@ -35,36 +65,16 @@ SMF100A.write("SOUR:POW:ATT 0dB")  # ustawienie wartości tłumika
 set_level(level)
 
 
-# Przestawianie generatora na częstotliwościach
-def set_frequency():
-    print("Wprowadź początkową częstotliwość: ")
-    start_freq = int(input())
-    print("Podaj końcową częstotliwość: ")
-    stop_freq = int(input())
-    print("Podaj krok częstotliwości: ")
-    step = int(input())
-    SMF100A.write("FREQ:MODE CW")
-    for frequency in range(start_freq, stop_freq + step, step):
-        SMF100A.write(f"FREQ {frequency} MHz")
-        time.sleep(0.5)
-    # SMF100A.write("FREQ 15GHz")
+print("Jak podać częstotliwości?\n1 - zdefiniować START, STOP oraz STEP (typ danych musi być int)"
+      "\n2 - z pliku txt (dane dowolne, byle liczbowe)")
+choice = int(input())
 
-
-def set_frequency_from_file():
-    file = open('frequencies_txt', 'r')
-    frequency = file.read().splitlines()
-    print(f"Częstotliwości wysłane na generator: {frequency} MHz")
-
-    for x in range(0, len(frequency), 1):
-        print(f"Częstotliwość nr {x + 1}: {frequency[x]}")
-        SMF100A.write(f"FREQ {frequency[x]} MHz")
-        time.sleep(1)
-
-    file.close()
-
-
-# set_frequency() # zdefiniowanie zakresu częstotliwości jako start, stop, step
-set_frequency_from_file() # zdefiniowanie zakresu częstotliwości na podstawie pliku txt
+if choice == 1:
+    set_frequency() # zdefiniowanie zakresu częstotliwości jako start, stop, step
+    SMF100A.write("OUTP OFF") # wyłącza generator po zakończeniu przemiatania
+if choice == 2:
+    set_frequency_from_file() # zdefiniowanie zakresu częstotliwości na podstawie pliku txt
+    SMF100A.write("OUTP OFF") # wyłącza generator po zakończeniu przemiatania
 
 # Close the connection to the instrument
 SMF100A.close()
