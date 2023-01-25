@@ -28,10 +28,12 @@ def set_frequency():
     stop_freq = int(input())
     print("Podaj krok częstotliwości: ")
     step = int(input())
+    print("Podaj czas trwania [ms]: ")
+    wait = float(input())
     SMF100A.write("FREQ:MODE CW")
     for frequency in range(start_freq, stop_freq + step, step):
         SMF100A.write(f"FREQ {frequency} MHz")
-        time.sleep(0.5)
+        time.sleep(wait/1000)
     # SMF100A.write("FREQ 15GHz")
 
 
@@ -39,13 +41,15 @@ def set_frequency():
 def set_frequency_from_file():
     file = open('frequencies_txt', 'r')
     frequency = file.read().splitlines()
-    print(f"Częstotliwości wysłane na generator: {frequency} MHz")
+    # print(f"Częstotliwości wysłane na generator: {frequency} MHz")
+    print("Podaj czas trwania [ms]: ")
+    wait = float(input())
 
     for x in range(0, len(frequency), 1):
         print("Częstotliwość nr ", x+1, ":", frequency[x].replace(",", "."))
         frequency[x] = frequency[x].replace(",", ".")
         SMF100A.write(f"FREQ {frequency[x]} MHz")
-        time.sleep(0.5)
+        time.sleep(wait/1000)
 
     file.close()
 
