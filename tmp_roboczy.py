@@ -9,10 +9,10 @@ print(f"Częstotliwości wysłane na generator: {frequency} MHz")
 
 
 for x in range(0, len(frequency), 1):
-    print(f"Częstotliwość nr {x+1}: {frequency[x]}")
+    print("Częstotliwość nr ", x+1, ":", frequency[x].replace(",", "."))
 
 file.close()
 
 end_time = time.perf_counter()
 
-print(f"Elapsed time: {(end_time - start_time)*math.pow(10, 6)} us")
+print(f"Elapsed time: {(end_time - start_time)*math.pow(10, 3)} ms")

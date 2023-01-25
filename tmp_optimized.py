@@ -12,5 +12,5 @@ for i, freq in enumerate(frequency, 1):
 
 end_time = time.perf_counter()
 
-print(f"Elapsed time: {(end_time - start_time)*math.pow(10, 6)} us")
+print(f"Elapsed time: {(end_time - start_time)*math.pow(10, 3)} ms")
 
