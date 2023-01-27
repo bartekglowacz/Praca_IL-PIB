@@ -9,8 +9,8 @@ Program musi umożliwiać:
 - wybór detektora
 """
 import time
-
 import pyvisa
+
 
 # Connect to the receiver over LAN
 rm = pyvisa.ResourceManager()
@@ -19,15 +19,22 @@ rm.list_resources()
 ESU40 = rm.open_resource('TCPIP::169.254.2.22::INSTR')
 # SMF100A.write("*RST") # ustawia wartości domyśne generatora i WYŁĄCZA poziom
 print(f"Dane urządzenia:\n{ESU40.query('*IDN?')}")
-ESU40.write("*RST")  # reset urządzenia
-ESU40.write("INST:SEL IFAN")  # wybór trybu IF
+
+# reset urządzenia
+ESU40.write("*RST")
+
+# wybór trybu IF
+ESU40.write("INST:SEL IFAN")
+
+# włączenie wyświetlacza podczas obsługi zdalnej
+ESU40.write("SYST:DISP:UPD ON")
 
 
 # deklaracja wartości częstotliwości
-def set_frequency():
-    print("Wprowadź częstotliwość: ")
-    frequency = input()
-    ESU40.write(f"FREQ:CENT {frequency}Hz")
+def set_frequency(frequency):
+    # print("Wprowadź częstotliwość: ")
+    # frequency = input()
+    ESU40.write(f"FREQ:CENT {frequency}MHz")
 
 
 # deklaracja czasu pomiaru
@@ -75,9 +82,16 @@ def set_measurement_time():
         ESU40.write("SWE:TIME 0.1ms")
 
 
-set_frequency()
+def pause_time(counter):
+    print("Ile czasu stać na zadanej częstotliwości? [ms]")
+    counter = int(input())
+    time.sleep(counter / 1000)
+
+"""
+set_frequency(frequency)
 set_RBW()
 set_span()
 set_RefLevel()
 set_detector()
 set_measurement_time()
+"""
