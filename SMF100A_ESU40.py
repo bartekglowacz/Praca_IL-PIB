@@ -7,6 +7,16 @@ import SMF100A_preset
 import ESU40_preset
 
 
+def set_level_SMF(level):
+    SMF100A.write(f":POW {level} dBuV")
+    SMF100A.write("OUTP ON")
+
+
+def wait(ms):  # czas pauzy w milisekundach
+    pause_time = time.sleep(ms / 1000)
+    return pause_time
+
+
 def frequency_band_SMF(frequency_file):
     for x in range(0, len(frequency_file), 1):
         frequency_file[x] = frequency_file[x].replace(",", ".")
@@ -22,30 +32,26 @@ def set_single_frequency_SMF(frequency_band_SMF):
     return single_frequency
 
 
+# single_frequency = set_single_frequency_SMF(frequency_band_SMF)
+
+
 def set_single_frequency_ESU(single_frequency):
     # print("Wprowadź częstotliwość: ")
     # frequency = input()
-    single_frequency = set_single_frequency_SMF(frequency_band_SMF)
+    # single_frequency = set_single_frequency_SMF(frequency_band_SMF)
     ESU40.write(f"FREQ:CENT {single_frequency}MHz")
-
-
-def set_level_SMF(level):
-    SMF100A.write(f":POW {level} dBuV")
-    SMF100A.write("OUTP ON")
-
-
-def wait(ms):  # czas pauzy w milisekundach
-    pause_time = time.sleep(ms / 1000)
-    return pause_time
+    return single_frequency
 
 
 def measurement_ESU(single_frequency):
-    for x in range(0, len(frequency_band_SMF), 1):
-        single_frequency[x] = frequency_band_SMF[x]
+    for x in range(0, len(frequency_band_SMF)):
+        single_frequency[x] = set_single_frequency_SMF(frequency_band_SMF)[x]
         set_single_frequency_SMF(single_frequency[x])
+        set_single_frequency_ESU(single_frequency[x])
         wait(ms)
-        set_single_frequency_ESU(single_frequency)
-    return single_frequency
+        # result_ESU = []
+        # result_ESU = result_ESU.append(ESU40.write('SENSe:FREQuency:CENTer?'))
+        # return result_ESU
 
 
 # Connect to the signal generator over LAN
@@ -72,7 +78,7 @@ level = float(input())
 print("Czas postoju: ")
 ms = int(input())
 
-set_single_frequency_SMF(frequency_band_SMF)
-set_single_frequency_ESU(frequency_band_SMF)
+# set_single_frequency_SMF(frequency_band_SMF)
+# set_single_frequency_ESU(frequency_band_SMF)
 set_level_SMF(level)
 measurement_ESU(frequency_band_SMF)
