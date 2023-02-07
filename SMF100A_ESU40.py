@@ -49,7 +49,10 @@ def measurement_ESU(single_frequency):
         set_single_frequency_SMF(single_frequency[x])
         set_single_frequency_ESU(single_frequency[x])
         wait(ms)
-        # result_ESU = []
+        result_ESU = []
+        a = ESU40.query('SENSe:FREQuency:CENTer?')  # odczytuje z ESU częstotliwości pomiarowe [Hz]
+        b = ESU40.query("trace:data?")
+        print(f"f = {a}, amp = {b}")
         # result_ESU = result_ESU.append(ESU40.write('SENSe:FREQuency:CENTer?'))
         # return result_ESU
 
