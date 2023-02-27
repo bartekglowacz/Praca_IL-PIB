@@ -1,10 +1,10 @@
 # Connect to the receiver over LAN
+import enums as enums
 import pyvisa
-
 
 rm = pyvisa.ResourceManager()
 rm.list_resources()
-ESU40 = rm.open_resource('TCPIP::169.254.2.22::INSTR') # żeby zwiększyć czas na odczyt to dodać timeout=10000 jako drugi argument
+ESU40 = rm.open_resource('TCPIP::10.0.0.4::INSTR') # żeby zwiększyć czas na odczyt to dodać timeout=10000 jako drugi argument
 
 # SMF100A.write("*RST") # ustawia wartości domyśne generatora i WYŁĄCZA poziom
 # print(f"Dane urządzenia:\n{ESU40.query('*IDN?')}")
@@ -28,6 +28,13 @@ ESU40.write("INP:COUP AC")
 ESU40.write("INP:TYPE INPUT1")
 
 # ustawienie detektora wartości szczytowej, średniej
-ESU40.write("DET:REC AVER") # POS - dla szczytowej
+ESU40.write("DET:REC AVER") # POS - dla szczytowej, AVER dla średniej
+
+ESU40.write("CALC:MARK ON")
+marker = ESU40.write("CALC:MARK:MAX")
+
+ESU40.close()
 
 
+# print(marker)
+# ESU40.query()
