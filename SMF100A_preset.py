@@ -4,22 +4,35 @@ import pyvisa
 rm = pyvisa.ResourceManager()
 rm.list_resources()
 SMF100A = rm.open_resource('TCPIP::10.0.0.3::INSTR')
+
+
 # SMF100A.write("*RST") # ustawia wartości domyśne generatora i WYŁĄCZA poziom
 # print(f"Generator:\n{SMF100A.query('*IDN?')}")
 
 # wyłączenie automatycznego tłumika
-SMF100A.write("OUTP:AMOD FIX")
+def set_auto_attenuator():
+    SMF100A.write("OUTP:AMOD FIX")
+
 
 # ustawienie wartości tłumika
-SMF100A.write("SOUR:POW:ATT 0dB")
+def set_attenuator(value):
+    SMF100A.write(f"SOUR:POW:ATT {value}dB")
+
 
 # wyłączenie generatora
-SMF100A.write("OUTP OFF")
+def output_on_off(mode):
+    SMF100A.write(f"OUTP {mode}")
+
 
 # ustawia jednostkę domyślną urządzenia
-SMF100A.write("UNIT:POW dBuV")
+def select_unit(unit):
+    SMF100A.write(f"UNIT:POW {unit}")
 
-SMF100A.close()
+
+def set_level(level):
+    SMF100A.write(f":POW {level} dBuV")
+    # SMF100A.write("OUTP ON")
+# SMF100A.close()
 
 # SMF100A.write(f":POW {50} dBuV")
 # SMF100A.write("OUTP ON")
