@@ -11,12 +11,13 @@ Program musi umożliwiać:
 import time
 import pyvisa
 
+from SMF100A_ESU40_v2 import frequency
 
 # Connect to the receiver over LAN
 rm = pyvisa.ResourceManager()
 rm.list_resources()
 ('ESU40::INSTR')
-ESU40 = rm.open_resource('TCPIP::169.254.2.22::INSTR')
+ESU40 = rm.open_resource('TCPIP::10.0.0.4::INSTR')
 # SMF100A.write("*RST") # ustawia wartości domyśne generatora i WYŁĄCZA poziom
 print(f"Dane urządzenia:\n{ESU40.query('*IDN?')}")
 
@@ -87,11 +88,10 @@ def pause_time(counter):
     counter = int(input())
     time.sleep(counter / 1000)
 
-"""
+
 set_frequency(frequency)
 set_RBW()
 set_span()
 set_RefLevel()
 set_detector()
 set_measurement_time()
-"""
