@@ -1,6 +1,6 @@
 import datetime
 
-import SMF100A_ESU40_v2
+import SMF100A_ESU40
 
 
 def result_file_name(name_of_file):

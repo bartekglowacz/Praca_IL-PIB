@@ -11,7 +11,7 @@ Program musi umożliwiać:
 import time
 import pyvisa
 
-from SMF100A_ESU40_v2 import frequency
+from SMF100A_ESU40 import frequency
 
 # Connect to the receiver over LAN
 rm = pyvisa.ResourceManager()

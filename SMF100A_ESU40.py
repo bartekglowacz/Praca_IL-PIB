@@ -1,89 +1,125 @@
+import datetime
 import time
-
 import pyvisa
-
-# Preset urządzeń i dodanie własnych nastaw, np. wartość tłumika lub tryb urządzenia
 import SMF100A_preset
 import ESU40_preset
 
 
-def set_level_SMF(SMF_lvl):
-    SMF100A.write(f":POW {SMF_lvl} dBuV")
-    SMF100A.write("OUTP ON")
+def result_file_name(name_of_file):
+    now = datetime.datetime.now()
+    year = str(now.year)
+    month = "%02d" % now.month
+    day = "%02d" % now.day
+    hour = "%02d" % now.hour
+    minute = "%02d" % now.minute
+    second = "%02d" % now.second
+    prefix_name = year + month + day + "_" + hour + minute + second + "_"
+    full_name_of_file = prefix_name + name_of_file + ".txt"
+    return full_name_of_file
 
 
-def wait(milliseconds):  # czas pauzy w milisekundach
-    return time.sleep(milliseconds / 1000)
+def set_frequency():
+    file = open('frequencies_txt', 'r')
+    frequency = file.read().splitlines()
+    frequency = [float(x.replace(",", ".")) for x in frequency]
+    return frequency
 
 
-def frequency_band_SMF(frequency_file):
-    for x in range(0, len(frequency_file), 1):
-        frequency_file[x] = frequency_file[x].replace(",", ".")
-    # print(frequency_file)
-    frequency_file = [float(x) for x in frequency_file]
-    return frequency_file
+def wait(measurement_pause):
+    time.sleep(measurement_pause / 1000)
 
 
-def set_single_frequency_SMF(single_frequency):
-    single_frequency = single_frequency  # zastąpić to 0 zmienną, która będzie czekała na odczyt z ESU
-    # print(f"Na generator poszło: {single_frequency = }")
-    SMF100A.write(f"FREQ {single_frequency} MHz")
-    return single_frequency
+class Device:
+    def __init__(self, name, ip_address, frequency_band):
+        self.name = name
+        self.name_connected = None
+        self.ip_address = ip_address
+        self.frequency_band = frequency_band
+
+    def connect(self):
+        # Connect to the device over LAN
+        rm = pyvisa.ResourceManager()
+        rm.list_resources()
+        self.name_connected = rm.open_resource(f'TCPIP::{self.ip_address}::INSTR')
+
+    def IDN(self):
+        print(f"Dane podłączonego urządzenia:\nNazwa: {self.name}\nIDN: {self.name_connected.query('*IDN?')}")
+
+    def frequencies_swapping(self):
+        self.frequency_band = set_frequency()
+        # print(self.frequency_band)
 
 
-# single_frequency = set_single_frequency_SMF(frequency_band_SMF)
+esu_results = []
+smf_results = []
 
+# tworzenie klasy ESU40
+ESU40 = Device("ESU40", "10.0.0.4", "frequencies.txt")
+ESU40.connect()
+ESU40.IDN()
+ESU40.frequencies_swapping()
 
-def set_single_frequency_ESU(single_frequency):
-    # print("Wprowadź częstotliwość: ")
-    # frequency = input()
-    single_frequency = set_single_frequency_SMF(frequency_band_SMF)
-    ESU40.write(f"FREQ:CENT {single_frequency}MHz")
-    return single_frequency
+# tworzenie klasy SMF 100A
+SMF100A = Device("SMF100A", "10.0.0.3", "frequencies.txt")
+SMF100A.connect()
+SMF100A.IDN()
+SMF100A.frequencies_swapping()
 
-
-def measurement_ESU(single_frequency):
-    for x in range(0, len(frequency_band_SMF)):
-        single_frequency[x] = set_single_frequency_SMF(frequency_band_SMF)[x]
-        set_single_frequency_SMF(single_frequency[x])
-        set_single_frequency_ESU(single_frequency[x])
-        wait(ms)
-        result_ESU = []
-        a = ESU40.query('SENSe:FREQuency:CENTer?')  # odczytuje z ESU częstotliwości pomiarowe [Hz]
-        # b = ESU40.query("trace:data?")
-        print(f"f = {a}")
-        result_ESU = result_ESU.append(ESU40.write('SENSe:FREQuency:CENTer?'))
-        return result_ESU
-
-
-# Connect to the signal generator over LAN
-rm = pyvisa.ResourceManager()
-rm.list_resources()
-SMF100A = rm.open_resource('TCPIP::10.0.0.3::INSTR')
-# SMF100A.write("*RST") # ustawia wartości domyśne generatora i WYŁĄCZA poziom
-print(f"Generator:\n{SMF100A.query('*IDN?')}")
-
-# Connect to the receiver over LAN
-rm = pyvisa.ResourceManager()
-rm.list_resources()
-ESU40 = rm.open_resource('TCPIP::10.0.0.4::INSTR')
-print(f"Odbiornik:\n{ESU40.query('*IDN?')}")
-
-file = open('frequencies_txt', 'r')
-frequency = file.read().splitlines()
-frequency_band_SMF = frequency_band_SMF(frequency)
-print(f"{frequency_band_SMF = }")
-
-print("Podaj poziom generowanego sygnału [dBuV]: ")
+# ustawienie wstępne SMF 100A:
+SMF100A_preset.set_auto_attenuator()
+print(f"Wprowadź wartość tłumika na {SMF100A.name}")
+attenuator_value = input()
+SMF100A_preset.set_attenuator(attenuator_value)
+SMF100A_preset.select_unit("dBuV")
+print(f"Wprowadź wartość poziomu napięcia na {SMF100A.name}")
 level = float(input())
+SMF100A_preset.set_level(level)
+SMF100A_preset.output_on_off("ON")
 
-print("Czas postoju: ")
-ms = int(input())
+# ustawienie wstępne ESU40:
+ESU40_preset.display_on()
+ESU40_preset.select_coupling("AC")
+ESU40_preset.select_RF_input(1)
+ESU40_preset.set_auto_attenuator()
+ESU40_preset.set_detector("AVER")
+# ESU40_preset.set_RBW()
+# ESU40_preset.set_measurement_time()
+# ESU40_preset.set_RefLevel()
+ESU40_preset.set_span()
 
-# set_single_frequency_SMF(frequency_band_SMF)
-# set_single_frequency_ESU(frequency_band_SMF)
-set_level_SMF(level)
-measurement_ESU(frequency_band_SMF)
+frequency = set_frequency()
+print(f"{frequency = }")
+print("Podaj czas pomiaru w milisekundach")
+pause = float(input())
 
+for x in frequency:
+    SMF100A.name_connected.write(f"FREQ {x} MHz")
+    SMF100A_freq = float(SMF100A.name_connected.query('FREQ?')) / 10 ** 6  # odczytywanie częstotliwości SMF 100A
+    ESU40.name_connected.write(f"FREQ:CENT {x} MHz")
+    ESU40_preset.set_RefLevel()
+    ESU40_preset.set_RBW()
+    ESU40_preset.set_measurement_time()
+    ESU40.name_connected.write("CALC:MARK:MAX")
+    # ESU_freq = float(ESU40.name_connected.query('SENSe:FREQuency:CENTer?')) / 10 ** 6  # odczytywanie częstotliwości ESU40
+    ESU_level = float(ESU40.name_connected.query_ascii_values('CALC:MARK1:Y?')[0])
+    # print(f"f na {SMF100A.name}: {x}")
+    print(f"f z ekranu SMF: {SMF100A_freq} MHz")
+    # print("poziom generatora: ", SMF100A.name_connected.query("POW?")) # odczytywanie wartości napięcia z ekranu SMF 100A
+    # print(f"f na {ESU40.name}: {x}")
+    # print(f"f z ekranu ESU: {ESU_freq} MHz")
+    print("U z ekranu ESU40: ", ESU_level)  # odczytywanie poziomy sygnału z ESU40
+    wait(pause)
+    smf_results.append(x)
+    esu_results.append(ESU_level)
 
-ESU40.write(f"FREQ:CENT {999}MHz")
+# Tworzenie pliku z wynikami
+print("Wprowadź nazwę pliku: ")
+file_name = input()
+final_file_name = result_file_name(file_name)
+final_results_txt = open(f"{final_file_name}", "w")
+
+final_results_txt.write("f [MHz]\tU [dBuV]\n")
+for x in range(0, len(smf_results)):
+    final_results_txt.write(str(smf_results[x]).replace(".", ",") + "\t" + str(esu_results[x]).replace(".", ",") + "\n")
+
+SMF100A_preset.output_on_off("OFF")
