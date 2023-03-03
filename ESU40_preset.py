@@ -77,5 +77,6 @@ def set_measurement_time():
         ESU40.write("SWE:TIME 1ms")
     if RBW >= 100000:
         ESU40.write("SWE:TIME 0.1ms")
+        # ESU40.write("SWE:TIME 100ms")
 
 # ESU40.close()

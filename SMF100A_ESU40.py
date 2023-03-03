@@ -121,5 +121,6 @@ final_results_txt = open(f"{final_file_name}", "w")
 final_results_txt.write("f [MHz]\tU [dBuV]\n")
 for x in range(0, len(smf_results)):
     final_results_txt.write(str(smf_results[x]).replace(".", ",") + "\t" + str(esu_results[x]).replace(".", ",") + "\n")
+final_results_txt.close()
 
 SMF100A_preset.output_on_off("OFF")
