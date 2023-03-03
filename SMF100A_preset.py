@@ -32,8 +32,12 @@ def select_unit(unit):
 def set_level(level):
     SMF100A.write(f":POW {level} dBuV")
     # SMF100A.write("OUTP ON")
+
+
 # SMF100A.close()
 
-# SMF100A.write(f":POW {50} dBuV")
+SMF100A.write(f":POW {50} dBuV")
 # SMF100A.write("OUTP ON")
 # print(SMF100A.query("POW?"))
+set_auto_attenuator()
+set_attenuator(10)

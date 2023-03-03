@@ -1,21 +1,26 @@
-import pyvisa
+import datetime
 
-rm = pyvisa.ResourceManager()
-SMF100A = rm.open_resource('TCPIP::10.0.0.3::INSTR')
-ESU40 = rm.open_resource('TCPIP::10.0.0.4::INSTR', timeout=1000)
-
-# ustawienie częstotliwości na generatorze SMF100A
-SMF100A.write(f"FREQ:CW {50}MHz")
-ESU40.write(f"FREQ:CENT {50} MHz")
-
-# ustawienie trybu pomiarowego
-ESU40.write("CALC:UNIT:POW dBUV")
-ESU40.write("CALC:MARK1:FUNC:MAX")
-
-# odczyt wartości mocy na markerze maksymalnym
-ESU40.write("CALC:MARK:MAX")
-value = ESU40.query_ascii_values('CALC:MARK1:Y?')[0]
-
-print(f"Wartość mocy na markierze maksymalnym: {value} dBuV")
+import SMF100A_ESU40_v2
 
 
+def result_file_name(name_of_file):
+    now = datetime.datetime.now()
+    year = str(now.year)
+    month = "%02d" % now.month
+    day = "%02d" % now.day
+    hour = "%02d" % now.hour
+    minute = "%02d" % now.minute
+    second = "%02d" % now.second
+    prefix_name = year + month + day + "_" + hour + minute + second + "_"
+    full_name_of_file = prefix_name + name_of_file + ".txt"
+    return full_name_of_file
+
+
+print("Wprowadź nazwę pliku: ")
+file_name = input()
+final_file_name = result_file_name(file_name)
+print(final_file_name)
+final_results_txt = open(f"{final_file_name}", "w")
+
+for value in SMF100A_ESU40_v2.frequency:
+    final_results_txt.write("f [MHz]\tU [dBuV]")
