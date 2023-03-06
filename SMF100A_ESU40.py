@@ -91,6 +91,8 @@ frequency = set_frequency()
 print(f"{frequency = }")
 print("Podaj czas pomiaru w milisekundach")
 pause = float(input())
+print("podaj wartośc, dla której odczyt z ESU można uznać za nieprawidłowy: ")
+error_criterium_value = float(input())
 
 for x in frequency:
     SMF100A.name_connected.write(f"FREQ {x} MHz")
@@ -100,23 +102,38 @@ for x in frequency:
     ESU40_preset.set_RBW()
     ESU40_preset.set_measurement_time()
     ESU40.name_connected.write("CALC:MARK:MAX")
+    wait(pause)
     # ESU_freq = float(ESU40.name_connected.query('SENSe:FREQuency:CENTer?')) / 10 ** 6  # odczytywanie częstotliwości ESU40
     ESU_level = float(ESU40.name_connected.query_ascii_values('CALC:MARK1:Y?')[0])
+    wait(pause)
     # print(f"f na {SMF100A.name}: {x}")
     print(f"f z ekranu SMF: {SMF100A_freq} MHz")
     # print("poziom generatora: ", SMF100A.name_connected.query("POW?")) # odczytywanie wartości napięcia z ekranu SMF 100A
     # print(f"f na {ESU40.name}: {x}")
     # print(f"f z ekranu ESU: {ESU_freq} MHz")
     print("U z ekranu ESU40: ", ESU_level)  # odczytywanie poziomy sygnału z ESU40
-    wait(pause)
-    smf_results.append(x)
-    esu_results.append(ESU_level)
+    if ESU_level < error_criterium_value:
+        print("You are in if!")
+        t = 1
+        wait(t)
+        while t < 10000:
+            print("You are in loop in if now!")
+            wait(t*10)
+            ESU40.name_connected.write("CALC:MARK:MAX")
+            ESU_level = float(ESU40.name_connected.query_ascii_values('CALC:MARK1:Y?')[0])
+            print(f"ESU level in if is equal to: {ESU_level}")
+            t = t*10
+        smf_results.append(x)
+        esu_results.append(ESU_level)
+    else:
+        smf_results.append(x)
+        esu_results.append(ESU_level)
 
 # Tworzenie pliku z wynikami
 print("Wprowadź nazwę pliku: ")
 file_name = input()
 final_file_name = result_file_name(file_name)
-final_results_txt = open(f"{final_file_name}", "w")
+final_results_txt = open(f"C:\\Users\\bglowacz\\PycharmProjects\\Praca_IL-PIB\\pliki wynikowe txt\\{final_file_name}", "w")
 
 final_results_txt.write("f [MHz]\tU [dBuV]\n")
 for x in range(0, len(smf_results)):
