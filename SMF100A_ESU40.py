@@ -91,7 +91,7 @@ frequency = set_frequency()
 print(f"{frequency = }")
 print("Podaj czas pomiaru w milisekundach")
 pause = float(input())
-print("podaj wartośc, dla której odczyt z ESU można uznać za nieprawidłowy: ")
+print("podaj wartośc, poniżej której, odczyt z ESU można uznać za nieprawidłowy: ")
 error_criterium_value = float(input())
 
 for x in frequency:
@@ -112,22 +112,25 @@ for x in frequency:
     # print(f"f na {ESU40.name}: {x}")
     # print(f"f z ekranu ESU: {ESU_freq} MHz")
     print("U z ekranu ESU40: ", ESU_level)  # odczytywanie poziomy sygnału z ESU40
-    if ESU_level < error_criterium_value:
-        print("You are in if!")
-        t = 1
-        wait(t)
-        while t < 10000:
+    t = 10
+    while ESU_level < error_criterium_value:
+        if t <= 10000:
             print("You are in loop in if now!")
-            wait(t*10)
+            print(f"Czas odstępu = {t} ms")
+            wait(t)
             ESU40.name_connected.write("CALC:MARK:MAX")
             ESU_level = float(ESU40.name_connected.query_ascii_values('CALC:MARK1:Y?')[0])
             print(f"ESU level in if is equal to: {ESU_level}")
-            t = t*10
-        smf_results.append(x)
-        esu_results.append(ESU_level)
-    else:
-        smf_results.append(x)
-        esu_results.append(ESU_level)
+            t = t * 10
+        else:
+            ESU40.name_connected.write("CALC:MARK:MAX")
+            ESU_level = float(ESU40.name_connected.query_ascii_values('CALC:MARK1:Y?')[0])
+            print(f"ESU level in else is equal to: {ESU_level}")
+            break
+    smf_results.append(x)
+    esu_results.append(ESU_level)
+
+
 
 # Tworzenie pliku z wynikami
 print("Wprowadź nazwę pliku: ")
