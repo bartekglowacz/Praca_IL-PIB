@@ -4,6 +4,7 @@ import time
 import pyvisa
 import SMF100A_preset
 import ESU40_preset
+import matplotlib.pyplot as draw
 
 
 def result_file_name(name_of_file):
@@ -28,6 +29,18 @@ def set_frequency():
 
 def wait(measurement_pause):
     time.sleep(measurement_pause / 1000)
+
+
+def drawing(x_value, y_value):
+    draw.ion()
+    draw.grid()
+    draw.xlabel('f [MHz]')
+    draw.ylabel('U [dBuV]')
+    draw.xscale('log')
+    draw.plot(x_value, y_value)
+    time.sleep(1)
+    draw.autoscale()
+    draw.show()
 
 
 class Device:
@@ -113,6 +126,7 @@ for x in frequency:
     print("U z ekranu ESU40: ", ESU_level)  # odczytywanie poziomy sygnału z ESU40
     smf_results.append(x)
     esu_results.append(ESU_level)
+    drawing(smf_results, esu_results)
 
 print(f"Częstotliwości: {smf_results}")
 print(f"Oryginalne poziomy: {esu_results}")
@@ -140,16 +154,17 @@ for x in range(0, len(frequency)):
             print(f"Poziom ESU w else wynosi: {ESU_level}")
             break
         print("czas odstepu wynosi: ", t)
-        t = t*10
+        t = t * 10
     esu_results.append(ESU_level)
-
+    drawing(smf_results[x], esu_results[x])
 print(f"Domierzone wartości ESU40: {esu_results}")
 
 # Tworzenie pliku z wynikami
 print("Wprowadź nazwę pliku: ")
 file_name = input()
 final_file_name = result_file_name(file_name)
-final_results_txt = open(f"C:\\Users\\bglowacz\\PycharmProjects\\Praca_IL-PIB\\pliki wynikowe txt\\{final_file_name}", "w")
+final_results_txt = open(f"C:\\Users\\bglowacz\\PycharmProjects\\Praca_IL-PIB\\pliki wynikowe txt\\{final_file_name}",
+                         "w")
 
 final_results_txt.write("f [MHz]\tU [dBuV]\n")
 for x in range(0, len(smf_results)):
