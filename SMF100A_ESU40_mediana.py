@@ -31,18 +31,6 @@ def wait(measurement_pause):
     time.sleep(measurement_pause / 1000)
 
 
-def drawing(x_value, y_value):
-    draw.ion()
-    draw.grid()
-    draw.xlabel('f [MHz]')
-    draw.ylabel('U [dBuV]')
-    draw.xscale('log')
-    draw.plot(x_value, y_value)
-    time.sleep(1)
-    draw.autoscale()
-    draw.show()
-
-
 class Device:
     def __init__(self, name, ip_address, frequency_band):
         self.name = name
@@ -126,38 +114,31 @@ for x in frequency:
     print("U z ekranu ESU40: ", ESU_level)  # odczytywanie poziomy sygnału z ESU40
     smf_results.append(x)
     esu_results.append(ESU_level)
-    drawing(smf_results, esu_results)
 
 print(f"Częstotliwości: {smf_results}")
 print(f"Oryginalne poziomy: {esu_results}")
 
 median = statistics.median(esu_results)
-print(f"Mediana wyników z ESU40: {median}")
+print(f"\nMediana wyników z ESU40: {median}\n")
 
-for x in range(0, len(frequency)):
-    t = 10
-    while esu_results[x] < median - 5:
-        if t <= 10000:
-            SMF100A.name_connected.write(f"FREQ {smf_results[x]} MHz")
-            print(f"Domiarka na częstotliwości {smf_results[x]} MHz")
-            ESU40.name_connected.write(f"FREQ:CENT {smf_results[x]} MHz")
-            ESU40_preset.set_RefLevel()
-            ESU40_preset.set_RBW()
-            ESU40_preset.set_measurement_time()
-            ESU40.name_connected.write("CALC:MARK:MAX")
-            ESU_level = float(ESU40.name_connected.query_ascii_values('CALC:MARK1:Y?')[0])
-            print(f"Domierzony poziom wynosi: {ESU_level}")
-            wait(t)
-            esu_results[x] = str(ESU_level).replace(str(esu_results[x]), str(ESU_level))
-            esu_results[x] = float(esu_results[x])
-        else:
-            print(f"Poziom ESU w else wynosi: {ESU_level}")
-            break
-        print("czas odstepu wynosi: ", t)
-        t = t * 10
-    esu_results.append(ESU_level)
-    drawing(smf_results[x], esu_results[x])
-print(f"Domierzone wartości ESU40: {esu_results}")
+for x in range(0, len(smf_results)):
+    if esu_results[x] < median - 1:
+        t = 2000
+        SMF100A.name_connected.write(f"FREQ {smf_results[x]} MHz")
+        print(f"Domiarka na f = {smf_results[x]} MHz")
+        ESU40.name_connected.write(f"FREQ:CENT {smf_results[x]} MHz")
+        ESU40_preset.set_RefLevel()
+        ESU40_preset.set_RBW()
+        ESU40_preset.set_measurement_time()
+        ESU40.name_connected.write("CALC:MARK:MAX")
+        wait(t)
+        ESU_level = float(ESU40.name_connected.query_ascii_values('CALC:MARK1:Y?')[0])
+        wait(t)
+        print(f"Wartość domierzona: {ESU_level}")
+        print(f"Czas odczytu wynosi {t} ms")
+        esu_results[x] = ESU_level
+    else:
+        esu_results[x] = esu_results[x]
 
 # Tworzenie pliku z wynikami
 print("Wprowadź nazwę pliku: ")
