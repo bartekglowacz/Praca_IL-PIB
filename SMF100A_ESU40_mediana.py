@@ -68,10 +68,14 @@ SMF100A.IDN()
 SMF100A.frequencies_swapping()
 
 # ustawienie wstępne SMF 100A:
-SMF100A_preset.set_auto_attenuator()
-print(f"Wprowadź wartość tłumika na {SMF100A.name}")
-attenuator_value = input()
-SMF100A_preset.set_attenuator(attenuator_value)
+print("Tłumik na SMF o stałej wartości - wpisz 1\nTłumik automatyczny - wpisz 2")
+choice = int(input())
+if choice == 1:  # tłumik o stałej wartości
+    print(f"Wprowadź wartość tłumika na {SMF100A.name}")
+    attenuator_value = input()
+    SMF100A_preset.set_attenuator(attenuator_value)
+if choice == 2:  # tłumik automatyczny
+    SMF100A_preset.set_auto_attenuator()
 SMF100A_preset.select_unit("dBuV")
 print(f"Wprowadź wartość poziomu napięcia na {SMF100A.name}")
 level = float(input())
@@ -79,14 +83,15 @@ SMF100A_preset.set_level(level)
 SMF100A_preset.output_on_off("ON")
 
 # ustawienie wstępne ESU40:
+ESU40_preset.ESU40_reset()
 ESU40_preset.display_on()
 ESU40_preset.select_coupling("AC")
 ESU40_preset.select_RF_input(1)
+
 ESU40_preset.set_auto_attenuator()
+# ESU40_preset.set_RefLevel(30) # dla pomiarów z ręcznym ustawieniem poziomu odniesienia [dB]
+
 ESU40_preset.set_detector("AVER")
-# ESU40_preset.set_RBW()
-# ESU40_preset.set_measurement_time()
-# ESU40_preset.set_RefLevel()
 ESU40_preset.set_span()
 
 frequency = set_frequency()
@@ -98,11 +103,9 @@ for x in frequency:
     SMF100A.name_connected.write(f"FREQ {x} MHz")
     SMF100A_freq = float(SMF100A.name_connected.query('FREQ?')) / 10 ** 6  # odczytywanie częstotliwości SMF 100A
     ESU40.name_connected.write(f"FREQ:CENT {x} MHz")
-    ESU40_preset.set_RefLevel()
     ESU40_preset.set_RBW()
-    ESU40_preset.set_measurement_time()
+    ESU40_preset.set_measurement_time("auto")
     ESU40.name_connected.write("CALC:MARK:MAX")
-    wait(pause)
     # ESU_freq = float(ESU40.name_connected.query('SENSe:FREQuency:CENTer?')) / 10 ** 6  # odczytywanie częstotliwości ESU40
     ESU_level = float(ESU40.name_connected.query_ascii_values('CALC:MARK1:Y?')[0])
     wait(pause)
@@ -123,15 +126,13 @@ print(f"\nMediana wyników z ESU40: {median}\n")
 
 for x in range(0, len(smf_results)):
     if esu_results[x] < median - 7:
-        t = 2000
+        t = 5000
         SMF100A.name_connected.write(f"FREQ {smf_results[x]} MHz")
         print(f"Domiarka na f = {smf_results[x]} MHz")
         ESU40.name_connected.write(f"FREQ:CENT {smf_results[x]} MHz")
-        ESU40_preset.set_RefLevel()
         ESU40_preset.set_RBW()
-        ESU40_preset.set_measurement_time()
-        ESU40.name_connected.write("CALC:MARK:MAX")
-        wait(t)
+        ESU40_preset.set_measurement_time(1000)  # domiarka z czasem 1000 ms
+        ESU40.name_connected.write("CALC:MARK1:MAX")
         ESU_level = float(ESU40.name_connected.query_ascii_values('CALC:MARK1:Y?')[0])
         wait(t)
         print(f"Wartość domierzona: {ESU_level}")

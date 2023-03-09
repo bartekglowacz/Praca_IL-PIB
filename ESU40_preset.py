@@ -10,7 +10,8 @@ ESU40 = rm.open_resource(
 # print(f"Dane urządzenia:\n{ESU40.query('*IDN?')}")
 
 # reset urządzenia
-ESU40.write("*RST")
+def ESU40_reset():
+    ESU40.write("*RST")
 
 # wybór trybu IF
 ESU40.write("INST:SEL IFAN")
@@ -32,7 +33,7 @@ def select_coupling(AC_DC):  # wpisać AC lub DC
 
 
 # Wybór portu wejściowego ESU
-def select_RF_input(input_number): # wpisać tylko samą cufrę
+def select_RF_input(input_number):  # wpisać tylko samą cufrę
     ESU40.write(f"INP:TYPE INPUT{input_number}")
 
 
@@ -58,25 +59,29 @@ def set_span():
 
 
 # deklaracja Ref Level
-def set_RefLevel():
-    ESU40.write("INP:ATT:AUTO ON")
+def set_RefLevel(value):
+    ESU40.write(f"INP:ATT {value} DB")
 
+def set_measurement_time(auto_or_predefined):
+    if auto_or_predefined == "auto":
+        RBW = int(ESU40.query("BAND?"))
+        # print("Ustawione RBW: [Hz]", RBW)  # zapytanie urządzenia o ustawioną wartość RBW
+        if RBW <= 10:
+            ESU40.write("SWE:TIME 1s")
+        if RBW == 100:
+            ESU40.write("SWE:TIME 100ms")
+        if 200 <= RBW <= 300:
+            ESU40.write("SWE:TIME 50ms")
+        if 1000 <= RBW <= 3000:
+            ESU40.write("SWE:TIME 10ms")
+        if 9000 <= RBW <= 30000:
+            ESU40.write("SWE:TIME 1ms")
+        if RBW >= 100000:
+            ESU40.write("SWE:TIME 0.1ms")
+    else:
+        ESU40.write(f"SWE:TIME {auto_or_predefined}ms")  # odejście od zaleceń producenta i wydłużenie czasu pomiaru
+        return auto_or_predefined
 
-def set_measurement_time():
-    RBW = int(ESU40.query("BAND?"))
-    # print("Ustawione RBW: [Hz]", RBW)  # zapytanie urządzenia o ustawioną wartość RBW
-    if RBW <= 10:
-        ESU40.write("SWE:TIME 1s")
-    if RBW == 100:
-        ESU40.write("SWE:TIME 100ms")
-    if 200 <= RBW <= 300:
-        ESU40.write("SWE:TIME 50ms")
-    if 1000 <= RBW <= 3000:
-        ESU40.write("SWE:TIME 10ms")
-    if 9000 <= RBW <= 30000:
-        ESU40.write("SWE:TIME 1ms")
-    if RBW >= 100000:
-        ESU40.write("SWE:TIME 0.1ms")
-        # ESU40.write("SWE:TIME 100ms")
 
 # ESU40.close()
+set_RefLevel(25)

@@ -11,11 +11,12 @@ SMF100A = rm.open_resource('TCPIP::10.0.0.3::INSTR')
 
 # wyłączenie automatycznego tłumika
 def set_auto_attenuator():
-    SMF100A.write("OUTP:AMOD FIX")
+    SMF100A.write("OUTP:AMOD AUTO")
 
 
 # ustawienie wartości tłumika
 def set_attenuator(value):
+    SMF100A.write("OUTP:AMOD FIX")
     SMF100A.write(f"SOUR:POW:ATT {value}dB")
 
 
@@ -36,8 +37,8 @@ def set_level(level):
 
 # SMF100A.close()
 
-SMF100A.write(f":POW {50} dBuV")
+# SMF100A.write(f":POW {50} dBuV")
 # SMF100A.write("OUTP ON")
 # print(SMF100A.query("POW?"))
-set_auto_attenuator()
-set_attenuator(10)
+# set_auto_attenuator()
+# set_attenuator()
