@@ -1,3 +1,10 @@
+"""
+Program do obsługi ESU40 i SMF100A. Rozpatrywane częstotliwości zadaje się z pliku txt. Wyniki również otrzymuje się w pliku txt.
+W przypadku kiedy ESU40 odczyta jakiś poziom znacznie odbiegający od pozostałych - pomiar jest powtarzany w tym punkcie z wydłużonym
+czasem pomiaru. Kryterium, które uznaje wynik za dobry lub nie jest mediana pomniejszona o 5. Jeżeli wartość odczytana jest mniejsza
+od tej wartości to pomiar jest powtarzany.
+"""
+
 import datetime
 import statistics
 import time
