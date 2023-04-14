@@ -128,6 +128,8 @@ print("Wpisz:\npp - dla rezultatu peak-peak\nrms - dla rezultatu w RMS")
 pp_rms = input()
 print("Wpisz:\ndB - dla wyniku z dBuV\nV - dla wyniku w V")
 dB_V = input()
+f_result = []
+U_result = []
 
 if dB_V not in ["V", "dB"]:
     print("Nieprawidłowy wybór")
@@ -141,19 +143,28 @@ for f in frequency_list:
     if dB_V == "dB":
         level = 20 * math.log(level * pow(10, 6), 10)
     print(f"U = {level} {dB_V} {pp_rms}")
+    f_result.append(frequency)
+    U_result.append(level)
     result.append(str(frequency) + ";" + str(level))
 
+# TU SIĘ DZIEJE STATYSTYKA
+Uaver = statistics.mean(U_result)
+modifier = 5
+Uaver_modified = Uaver - modifier
+# print(f_result)
+# print(U_result)
+print(f"średnia wartość napięcia to: {Uaver}")
+
 # DOMIAR ODSTAJĄCYCH WARTOŚCI
-f_result = []
-U_result = []
 print("Domiar:")
-for x in result:
-    f_result.append(float(x.partition(";")[0].replace(",", ".")))
-    U_result.append(float(x.partition(";")[2].replace(",", ".")))
-result_Uaver = statistics.mean(U_result)
-print(f_result)
-print(U_result)
-print(f"średnia wartość napięcia to: {result_Uaver}")
+for f, U in zip(f_result, U_result):
+    if U < Uaver_modified:
+        print(f"odczytana wartość {round(U, 5)}, na częstotliwości {f} jest mniejsza niż wartość średnia zmodyfikowana {round(Uaver_modified, 5)}")
+    elif U > Uaver_modified:
+        print(f"odczytana wartość {round(U, 5)}, na częstotliwości {f} jest większa niż wartość średnia zmodyfikowana {round(Uaver_modified, 5)}")
+        frequency = float(HMF2550.set_single_frequency(f))
+
+
 
 HMF2550.power_on_off("off")
 
