@@ -137,7 +137,7 @@ if dB_V not in ["V", "dB"]:
 for f in frequency_list:
     frequency = float(HMF2550.set_single_frequency(f))
     print(f"f generatora = {frequency} Hz")
-    time.sleep(0.100)
+    time.sleep(1)
     level = abs(float(keithley2000.read_level(f)))
     level = keithley2000.RMS_or_Peak(level, pp_rms)  # p dla wartości peak, rms dla wartości rms
     if dB_V == "dB":
@@ -155,14 +155,14 @@ Uaver_modified = Uaver - modifier
 # print(U_result)
 print(f"średnia wartość napięcia to: {Uaver}")
 
-# DOMIAR ODSTAJĄCYCH WARTOŚCI
-print("Domiar:")
-for f, U in zip(f_result, U_result):
-    if U < Uaver_modified:
-        print(f"odczytana wartość {round(U, 5)}, na częstotliwości {f} jest mniejsza niż wartość średnia zmodyfikowana {round(Uaver_modified, 5)}")
-    elif U > Uaver_modified:
-        print(f"odczytana wartość {round(U, 5)}, na częstotliwości {f} jest większa niż wartość średnia zmodyfikowana {round(Uaver_modified, 5)}")
-        frequency = float(HMF2550.set_single_frequency(f))
+# # DOMIAR ODSTAJĄCYCH WARTOŚCI
+# print("Domiar:")
+# for f, U in zip(f_result, U_result):
+#     if U < Uaver_modified:
+#         print(f"odczytana wartość {round(U, 5)}, na częstotliwości {f} jest mniejsza niż wartość średnia zmodyfikowana {round(Uaver_modified, 5)}")
+#     elif U > Uaver_modified:
+#         print(f"odczytana wartość {round(U, 5)}, na częstotliwości {f} jest większa niż wartość średnia zmodyfikowana {round(Uaver_modified, 5)}")
+#         frequency = float(HMF2550.set_single_frequency(f))
 
 
 
