@@ -137,7 +137,7 @@ if dB_V not in ["V", "dB"]:
 for f in frequency_list:
     frequency = float(HMF2550.set_single_frequency(f))
     print(f"f generatora = {frequency} Hz")
-    time.sleep(1)
+    time.sleep(0.5)
     level = abs(float(keithley2000.read_level(f)))
     level = keithley2000.RMS_or_Peak(level, pp_rms)  # p dla wartości peak, rms dla wartości rms
     if dB_V == "dB":
