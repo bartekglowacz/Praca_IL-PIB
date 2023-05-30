@@ -113,7 +113,7 @@ keithley2000.connect()
 keithley2000.IDN()
 # keithley2000.AC_or_DC()
 
-HMF2550 = SignalGenerator("ASRL10::INSTR", "HMF2550")
+HMF2550 = SignalGenerator("ASRL5::INSTR", "HMF2550")
 HMF2550.connect()
 HMF2550.IDN()
 HMF2550.power_on_off("ON")

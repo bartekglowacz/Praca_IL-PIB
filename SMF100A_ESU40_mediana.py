@@ -132,7 +132,7 @@ median = statistics.median(esu_results)
 print(f"\nMediana wyników z ESU40: {median}\n")
 
 for x in range(0, len(smf_results)):
-    if esu_results[x] < median - 7:
+    if esu_results[x] < median - 40:
         t = 5000
         SMF100A.name_connected.write(f"FREQ {smf_results[x]} MHz")
         print(f"Domiarka na f = {smf_results[x]} MHz")
