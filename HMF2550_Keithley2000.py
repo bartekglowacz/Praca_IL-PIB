@@ -16,7 +16,7 @@ class Device:
     def connect(self):
         rm = pyvisa.ResourceManager()
         rm.list_resources()
-        self.connected_device_name = rm.open_resource(self.address)
+        self.connected_device_name = rm.open_resource(self.address, timeout=6000)
         self.connected_device_name.write("*RST")
         return self.connected_device_name
 
