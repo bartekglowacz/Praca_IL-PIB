@@ -49,7 +49,7 @@ class Device:
         # Connect to the device over LAN
         rm = pyvisa.ResourceManager()
         rm.list_resources()
-        self.name_connected = rm.open_resource(f'TCPIP::{self.ip_address}::INSTR')
+        self.name_connected = rm.open_resource(f'TCPIP::{self.ip_address}::INSTR', timeout=10000)
 
     def IDN(self):
         print(f"Dane podłączonego urządzenia:\nNazwa: {self.name}\nIDN: {self.name_connected.query('*IDN?')}")
@@ -111,7 +111,7 @@ for x in frequency:
     SMF100A_freq = float(SMF100A.name_connected.query('FREQ?')) / 10 ** 6  # odczytywanie częstotliwości SMF 100A
     ESU40.name_connected.write(f"FREQ:CENT {x} MHz")
     ESU40_preset.set_RBW()
-    ESU40_preset.set_measurement_time("auto")
+    ESU40_preset.set_measurement_time("auto") #ZMIANA CZASU POMIARU ("auto")
     ESU40.name_connected.write("CALC:MARK:MAX")
     # ESU_freq = float(ESU40.name_connected.query('SENSe:FREQuency:CENTer?')) / 10 ** 6  # odczytywanie częstotliwości ESU40
     ESU_level = float(ESU40.name_connected.query_ascii_values('CALC:MARK1:Y?')[0])
@@ -132,7 +132,7 @@ median = statistics.median(esu_results)
 print(f"\nMediana wyników z ESU40: {median}\n")
 
 for x in range(0, len(smf_results)):
-    if esu_results[x] < median - 40:
+    if esu_results[x] < median - 70:
         t = 5000
         SMF100A.name_connected.write(f"FREQ {smf_results[x]} MHz")
         print(f"Domiarka na f = {smf_results[x]} MHz")
