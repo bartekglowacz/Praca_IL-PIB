@@ -14,6 +14,7 @@ import ESU40_preset
 import matplotlib.pyplot as draw
 
 
+# Funkcja do nadawania nazwy plikom wynikowym
 def result_file_name(name_of_file):
     now = datetime.datetime.now()
     year = str(now.year)
@@ -49,7 +50,7 @@ class Device:
         # Connect to the device over LAN
         rm = pyvisa.ResourceManager()
         rm.list_resources()
-        self.name_connected = rm.open_resource(f'TCPIP::{self.ip_address}::INSTR', timeout=10000)
+        self.name_connected = rm.open_resource(f'TCPIP::{self.ip_address}::INSTR', timeout=10000) #timeout gdyby ESU miało problem z wyrabianiem z odczytem
 
     def IDN(self):
         print(f"Dane podłączonego urządzenia:\nNazwa: {self.name}\nIDN: {self.name_connected.query('*IDN?')}")
@@ -107,14 +108,14 @@ print("Podaj czas pomiaru w milisekundach")
 pause = float(input())
 
 for x in frequency:
-    SMF100A.name_connected.write(f"FREQ {x} MHz")
+    SMF100A.name_connected.write(f"FREQ {x} MHz") #ustawianie częstotliwości na SMF
     SMF100A_freq = float(SMF100A.name_connected.query('FREQ?')) / 10 ** 6  # odczytywanie częstotliwości SMF 100A
-    ESU40.name_connected.write(f"FREQ:CENT {x} MHz")
+    ESU40.name_connected.write(f"FREQ:CENT {x} MHz") #ustawianie częstotliwości środkowej na ESU
     ESU40_preset.set_RBW()
     ESU40_preset.set_measurement_time("auto") #ZMIANA CZASU POMIARU ("auto")
     ESU40.name_connected.write("CALC:MARK:MAX")
     # ESU_freq = float(ESU40.name_connected.query('SENSe:FREQuency:CENTer?')) / 10 ** 6  # odczytywanie częstotliwości ESU40
-    ESU_level = float(ESU40.name_connected.query_ascii_values('CALC:MARK1:Y?')[0])
+    ESU_level = float(ESU40.name_connected.query_ascii_values('CALC:MARK1:Y?')[0]) #odczyt poziomu na ustawionej częstotlwości poprzez ustawienie markera
     wait(pause)
     # print(f"f na {SMF100A.name}: {x}")
     print(f"f z ekranu SMF: {SMF100A_freq} MHz")
@@ -132,7 +133,7 @@ median = statistics.median(esu_results)
 print(f"\nMediana wyników z ESU40: {median}\n")
 
 for x in range(0, len(smf_results)):
-    if esu_results[x] < median - 70:
+    if esu_results[x] < median - 70: #czasami ESU nie wyrabia z odczytem i łapie dziurę - ta instrukcja jest po to żeby tę dziurę domierzyć z wydłużonym czasem pomiaru
         t = 5000
         SMF100A.name_connected.write(f"FREQ {smf_results[x]} MHz")
         print(f"Domiarka na f = {smf_results[x]} MHz")
