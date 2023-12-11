@@ -1,5 +1,6 @@
 import datetime
 import math
+import os
 import statistics
 import time
 import pyvisa
@@ -16,7 +17,7 @@ class Device:
     def connect(self):
         rm = pyvisa.ResourceManager()
         rm.list_resources()
-        self.connected_device_name = rm.open_resource(self.address)
+        self.connected_device_name = rm.open_resource(self.address, timeout=6000)
         self.connected_device_name.write("*RST")
         return self.connected_device_name
 
@@ -84,13 +85,16 @@ class SignalGenerator(Device):
 
 
 def set_frequency_band():
-    file = open("frequencies_txt", "r")
+    file = open(f"{os.path.dirname(os.path.abspath(__file__))}\\frequencies_txt", "r")
     frequencies = file.readlines()
     frequencies = [float(freq.replace(",", ".")) for freq in frequencies]
     return frequencies
 
 
-def result_file_name(name, result_list):
+def result_file_name(name, result_list, header): #zapis do folderu, w którym jest aplikacja
+    # Pobierz katalog, w którym znajduje się plik wykonywalny
+    app_directory = os.path.dirname(os.path.abspath(__file__))
+
     now = datetime.datetime.now()
     year = str(now.year)
     month = "%02d" % now.month
@@ -99,12 +103,16 @@ def result_file_name(name, result_list):
     minute = "%02d" % now.minute
     second = "%02d" % now.second
     prefix_name = year + month + day + "_" + hour + minute + second + "_"
-    full_name_of_file = prefix_name + name + ".txt"
-    result_txt = open(f"C:\\Users\\bglowacz\\PycharmProjects\\Praca_IL-PIB\\pliki wynikowe txt\\{full_name_of_file}",
-                      "w")
-    result_txt.write("f [Hz]\tU [V]\n")
+
+    # Utwórz pełną ścieżkę do pliku wynikowego w folderze aplikacji
+    full_name_of_file = os.path.join(app_directory, prefix_name + name + ".txt")
+
+    result_txt = open(full_name_of_file, "w")
+    result_txt.write(f"f [Hz]\tU [{header}]\n")
+
     for x in result_list:
         result_txt.write(x.replace(".", ",") + "\n")
+
     result_txt.close()
 
 
@@ -113,7 +121,7 @@ keithley2000.connect()
 keithley2000.IDN()
 # keithley2000.AC_or_DC()
 
-HMF2550 = SignalGenerator("ASRL10::INSTR", "HMF2550")
+HMF2550 = SignalGenerator("ASRL5::INSTR", "HMF2550")
 HMF2550.connect()
 HMF2550.IDN()
 HMF2550.power_on_off("ON")
@@ -128,46 +136,46 @@ print("Wpisz:\npp - dla rezultatu peak-peak\nrms - dla rezultatu w RMS")
 pp_rms = input()
 print("Wpisz:\ndB - dla wyniku z dBuV\nV - dla wyniku w V")
 dB_V = input()
+f_result = []
+U_result = []
 
 if dB_V not in ["V", "dB"]:
     print("Nieprawidłowy wybór")
     exit()
-for f in range(0, len(frequency_list)):
-    frequency = float(HMF2550.set_single_frequency(frequency_list[f]))
+for f in frequency_list:
+    frequency = float(HMF2550.set_single_frequency(f))
     print(f"f generatora = {frequency} Hz")
-    time.sleep(0.100)
-    level = abs(float(keithley2000.read_level(frequency_list[f])))
-    try:
-        level_previous = abs(float(keithley2000.read_level(frequency_list[f-1])))
-        if level - level_previous > 2:
-            frequency = float(HMF2550.set_single_frequency(frequency_list[f]))
-            time.sleep(3)
-            level = abs(float(keithley2000.read_level(frequency_list[f])))
-        else:
-            print(f"jest ok, różnica wynosi {round(level - level_previous, 5)}")
-    except Exception:
-        print("Brak poprzedniego pomiaru!")
-        pass
+    time.sleep(0.5)
+    level = abs(float(keithley2000.read_level(f)))
     level = keithley2000.RMS_or_Peak(level, pp_rms)  # p dla wartości peak, rms dla wartości rms
     if dB_V == "dB":
         level = 20 * math.log(level * pow(10, 6), 10)
     print(f"U = {level} {dB_V} {pp_rms}")
+    f_result.append(frequency)
+    U_result.append(level)
     result.append(str(frequency) + ";" + str(level))
 
-# DOMIAR ODSTAJĄCYCH WARTOŚCI
-# f_result = []
-# U_result = []
-# print("Domiar:")
-# for x in result:
-#     f_result.append(float(x.partition(";")[0].replace(",", ".")))
-#     U_result.append(float(x.partition(";")[2].replace(",", ".")))
-# result_Uaver = statistics.mean(U_result)
+# TU SIĘ DZIEJE STATYSTYKA
+Uaver = statistics.mean(U_result)
+modifier = 5
+Uaver_modified = Uaver - modifier
 # print(f_result)
 # print(U_result)
-# print(f"średnia wartość napięcia to: {result_Uaver}")
+print(f"średnia wartość napięcia to: {Uaver}")
+
+# # DOMIAR ODSTAJĄCYCH WARTOŚCI
+# print("Domiar:")
+# for f, U in zip(f_result, U_result):
+#     if U < Uaver_modified:
+#         print(f"odczytana wartość {round(U, 5)}, na częstotliwości {f} jest mniejsza niż wartość średnia zmodyfikowana {round(Uaver_modified, 5)}")
+#     elif U > Uaver_modified:
+#         print(f"odczytana wartość {round(U, 5)}, na częstotliwości {f} jest większa niż wartość średnia zmodyfikowana {round(Uaver_modified, 5)}")
+#         frequency = float(HMF2550.set_single_frequency(f))
+
+
 
 HMF2550.power_on_off("off")
 
 print("Nazwa pliku:")
 file_name = input()
-result_file_name(file_name, result)
+result_file_name(file_name, result, dB_V)
