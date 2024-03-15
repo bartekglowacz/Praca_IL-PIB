@@ -55,21 +55,24 @@ class Voltmeter(Device):
         # self.connected_device_name.write(":SENS:VOLT:AC:RANG:AUTO OFF")  # ręcznie ustawienie zakresu woltomierza
         # self.connected_device_name.write(":SENS:VOLT:AC:RANG 1")  # ręcznie ustawienie zakresu woltomierza
         self.connected_device_name.write(":SENS:VOLT:AC:RANG:AUTO ON")
-        if freq < 1:
-            self.connected_device_name.write("FUNC 'VOLT:DC'")
-            self.connected_device_name.write("UNIT:VOLT:DC V")
-            level_voltmeter = float(self.connected_device_name.query("read?"))
-            return level_voltmeter
-        if freq >= 1:
-            self.connected_device_name.write("FUNC 'VOLT:AC'")
-            self.connected_device_name.write("UNIT:VOLT:AC V")
-            level_voltmeter = float(self.connected_device_name.query("read?"))
-            return level_voltmeter
+        self.connected_device_name.write("FUNC 'VOLT:AC'")
+        self.connected_device_name.write("UNIT:VOLT:AC V")
+        level_voltmeter = float(self.connected_device_name.query("read?"))
+        return level_voltmeter
 
 
 class SignalGenerator(Device):
     def __init__(self, address, name):
         super().__init__(address, name)
+
+    def HighImpedance_or_Xohm(self, impedanceValue):
+        if impedanceValue == "H":
+            self.connected_device_name.write(f"OUTPut:LOAD INF")
+        elif impedanceValue.isnumeric():
+            self.connected_device_name.write(f"OUTPut:LOAD {impedanceValue}")
+        else:
+            print("Nieprawidłowy wybór")
+            exit()
 
     def set_level(self, level_func):
         self.connected_device_name.write("VOLT:UNIT VOLT")
@@ -102,7 +105,7 @@ def result_file_name(name, result_list, header):
     full_name_of_file = prefix_name + name + ".txt"
     result_txt = open(f"C:\\Users\\bglowacz\\PycharmProjects\\Praca_IL-PIB\\pliki wynikowe txt\\{full_name_of_file}",
                       "w")
-    result_txt.write(f"f [Hz];\tU [{header}]\n")
+    result_txt.write(f"f [Hz];U [{header}]\n")
     for x in result_list:
         result_txt.write(x.replace(".", ",") + "\n")
     result_txt.close()
@@ -120,6 +123,9 @@ HMF2550.power_on_off("ON")
 print("Podaj napięcie generatora: ")
 generator_level = float(input())
 HMF2550.set_level(generator_level)
+print("Podaj impedancję generatora\nLiczbę - dla konkretnej wartości\nH - dla trybu wysokiej impedancji")
+impedanceValue = input()
+HMF2550.HighImpedance_or_Xohm(impedanceValue)
 frequency_list = set_frequency_band()
 
 # ROZPOCZĘCIE POMIARU
@@ -163,7 +169,6 @@ print(f"średnia wartość napięcia to: {Uaver}")
 #     elif U > Uaver_modified:
 #         print(f"odczytana wartość {round(U, 5)}, na częstotliwości {f} jest większa niż wartość średnia zmodyfikowana {round(Uaver_modified, 5)}")
 #         frequency = float(HMF2550.set_single_frequency(f))
-
 
 
 HMF2550.power_on_off("off")
