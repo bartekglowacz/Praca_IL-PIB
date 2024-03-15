@@ -102,7 +102,7 @@ def result_file_name(name, result_list, header):
     full_name_of_file = prefix_name + name + ".txt"
     result_txt = open(f"C:\\Users\\bglowacz\\PycharmProjects\\Praca_IL-PIB\\pliki wynikowe txt\\{full_name_of_file}",
                       "w")
-    result_txt.write(f"f [Hz]\tU [{header}]\n")
+    result_txt.write(f"f [Hz];\tU [{header}]\n")
     for x in result_list:
         result_txt.write(x.replace(".", ",") + "\n")
     result_txt.close()
