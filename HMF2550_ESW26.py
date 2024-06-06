@@ -39,6 +39,28 @@ class Receiver:
         else:
             print("Nieprawidłowy wybór")
 
+    def read_RBW(self):
+        rbw_value = self.name.query('BAND?')
+        print(f"RBW: {rbw_value}")
+        return rbw_value
+
+    def measurement_time(self, f, sweep_time=None):
+        if f < 100:
+            sweep_time == 1
+        elif 100 <= f < 1000:
+            sweep_time == 0.1
+        elif 1000 <= f < 10000:
+            sweep_time == 0.1
+        elif 10000 <= f < 100000:
+            sweep_time == 0.05
+        elif 100000 <= f < 120000:
+            sweep_time == 0.05
+        elif 120000 <= f < 1000000000:
+            sweep_time == 0.01
+        elif 1000000000 <= f < 7000000000:
+            sweep_time == 0.01
+        return sweep_time
+
 
 class HMF2550:
     def __init__(self, address, name):
@@ -88,7 +110,7 @@ class HMF2550:
             print("Nieprawidłowy wybór")
 
     def set_single_frequency(self, f):  # w Hz!
-        self.name.write(f"FREQ {f*pow(10,6)}")
+        self.name.write(f"FREQ {f * pow(10, 6)}")
         return f
 
 
@@ -117,8 +139,10 @@ signalGenerator.power_on_off("ON")
 
 for f in frequency_table("frequencies_txt"):
     signalGenerator.set_single_frequency(f)
-    time.sleep(0.2)
+    time.sleep(0.5)
     receiver.input_coupling(f)
     receiver.set_Frequency(f)
-    time.sleep(0.2)
+    receiver.read_RBW()
+    receiver.measurement_time(f)
+    time.sleep(0.5)
 signalGenerator.power_on_off("OFF")
