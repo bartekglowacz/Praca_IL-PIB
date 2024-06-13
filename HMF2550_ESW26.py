@@ -39,27 +39,28 @@ class Receiver:
         else:
             print("Nieprawidłowy wybór")
 
+    def sweep_time(self, f):
+        if f < 100 / pow(10, 6):
+            sweep_time = 1
+        elif 100 / pow(10, 6) <= f < 1000 / pow(10, 6):
+            sweep_time = 0.1
+        elif 1000 / pow(10, 6) <= f < 10000 / pow(10, 6):
+            sweep_time = 0.1
+        elif 10000 / pow(10, 6) <= f < 100000 / pow(10, 6):
+            sweep_time = 0.05
+        elif 100000 / pow(10, 6) <= f < 120000 / pow(10, 6):
+            sweep_time = 0.05
+        elif 120000 / pow(10, 6) <= f < 1000000000 / pow(10, 6):
+            sweep_time = 0.01
+        elif 1000000000 / pow(10, 6) <= f < 7000000000 / pow(10, 6):
+            sweep_time = 0.01
+        self.name.write(f"SWE:TIME {sweep_time}s")
+        return sweep_time
+
     def read_RBW(self):
         rbw_value = self.name.query('BAND?')
         print(f"RBW: {rbw_value}")
         return rbw_value
-
-    def measurement_time(self, f, sweep_time=None):
-        if f < 100:
-            sweep_time == 1
-        elif 100 <= f < 1000:
-            sweep_time == 0.1
-        elif 1000 <= f < 10000:
-            sweep_time == 0.1
-        elif 10000 <= f < 100000:
-            sweep_time == 0.05
-        elif 100000 <= f < 120000:
-            sweep_time == 0.05
-        elif 120000 <= f < 1000000000:
-            sweep_time == 0.01
-        elif 1000000000 <= f < 7000000000:
-            sweep_time == 0.01
-        return sweep_time
 
 
 class HMF2550:
@@ -115,8 +116,14 @@ class HMF2550:
 
 
 def frequency_table(txt_file):
-    txt_file = open(txt_file, "r")
-    txt_file = [float(f.replace(",", ".")) / pow(10, 6) for f in txt_file]  # displayed in MHz
+    print("1 - częstotliwości podane w Hz\n2 - częstotlwiości podane w MHz")
+    choice = int(input())
+    if choice == 1:
+        txt_file = open(txt_file, "r")
+        txt_file = [float(f.replace(",", ".")) / pow(10, 6) for f in txt_file]  # displayed in MHz
+    elif choice == 2:
+        txt_file = open(txt_file, "r")
+        txt_file = [float(f.replace(",", ".")) for f in txt_file]  # displayed in MHz
     # print(txt_file)
     return txt_file
 
@@ -138,11 +145,12 @@ signalGenerator.power_on_off("ON")
 # frequency_sweep("frequencies_txt")
 
 for f in frequency_table("frequencies_txt"):
+    print(f"f = {f}")
     signalGenerator.set_single_frequency(f)
-    time.sleep(0.5)
+    time.sleep(1)
+    receiver.sweep_time(float(f))
     receiver.input_coupling(f)
     receiver.set_Frequency(f)
     receiver.read_RBW()
-    receiver.measurement_time(f)
-    time.sleep(0.5)
+    time.sleep(1)
 signalGenerator.power_on_off("OFF")
