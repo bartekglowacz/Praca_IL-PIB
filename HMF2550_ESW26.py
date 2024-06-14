@@ -11,7 +11,7 @@ class Receiver:
     def connect(self):
         rm = pyvisa.ResourceManager()
         rm.list_resources()
-        self.name = rm.open_resource(self.address, timeout=100, read_termination='\n')
+        self.name = rm.open_resource(self.address, timeout=500)
         self.name.write("*RST")
         return self.name
 
@@ -69,8 +69,9 @@ class Receiver:
         self.name.write("init1:cont ON")
         time.sleep(1)
         self.name.write(":DISP:BARG:PHOL:RES")
-        time.sleep(1)
+        time.sleep(2)
         level = self.name.query("trac? single")
+        time.sleep(2)
         return level
 
 
@@ -142,27 +143,27 @@ def frequency_table(txt_file):
 receiver = Receiver("TCPIP::169.254.10.77::inst0::INSTR", "ESR7")
 receiver.connect()
 receiver.IDN()
-# receiver.detector()
+receiver.detector()
 receiver.auto_attenuator()
 
-#
-# signalGenerator = HMF2550("ASRL5::INSTR", "HMF2550")
-# signalGenerator.connect()
-# signalGenerator.IDN()
-# signalGenerator.HighImpedance_or_Xohm()
-# signalGenerator.set_level()
-# signalGenerator.set_single_frequency(1)  # w MHz
-# signalGenerator.power_on_off("ON")
+
+signalGenerator = HMF2550("ASRL5::INSTR", "HMF2550")
+signalGenerator.connect()
+signalGenerator.IDN()
+signalGenerator.HighImpedance_or_Xohm()
+signalGenerator.set_level()
+signalGenerator.set_single_frequency(1)  # w MHz
+signalGenerator.power_on_off("ON")
 receiver.set_Frequency(30)
 level = receiver.read_level()  # w MHz
 print(f"LEVEL: {level}")
 
-# for f in frequency_table("frequencies_txt"):
-#     print(f"f = {f}")
-#     print(f"Częstotliwość generatora: {signalGenerator.set_single_frequency(f)} MHz")
-#     receiver.sweep_time(float(f))
-#     receiver.input_coupling(f)
-#     receiver.set_Frequency(f)
-#     print(f"Poziom na odbiorniku: {receiver.read_level()} dBμV")
-#     time.sleep(1)
-# signalGenerator.power_on_off("OFF")
+for f in frequency_table("frequencies_txt"):
+    print(f"f = {f}")
+    print(f"Częstotliwość generatora: {signalGenerator.set_single_frequency(f)} MHz")
+    receiver.sweep_time(float(f))
+    receiver.input_coupling(f)
+    receiver.set_Frequency(f)
+    print(f"Poziom na odbiorniku: {receiver.read_level()} dBμV")
+    time.sleep(1)
+signalGenerator.power_on_off("OFF")
