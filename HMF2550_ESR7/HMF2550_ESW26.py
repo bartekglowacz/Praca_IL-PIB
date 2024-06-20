@@ -1,5 +1,5 @@
+import datetime
 import time
-
 import pyvisa
 
 
@@ -11,7 +11,8 @@ class Receiver:
     def connect(self):
         rm = pyvisa.ResourceManager()
         rm.list_resources()
-        self.name = rm.open_resource(self.address, timeout=500)
+        self.name = rm.open_resource(self.address)
+        # self.name.timeout = 10000
         self.name.write("*RST")
         return self.name
 
@@ -28,7 +29,7 @@ class Receiver:
             self.name.write("INP:COUP DC")
 
     def detector(self):
-        print("Jaki detektor wariacie?\n1 - peak\n2 - average\n3 - quasi peak")
+        print("Jaki detektor wariacie?\n1 - peak\n2 - average\n3 - quasi peak (dostępny od 100 Hz)")
         choice = int(input())
         if choice == 1:
             self.name.write("DET:REC POS")
@@ -65,14 +66,46 @@ class Receiver:
         print(f"RBW: {rbw_value}")
         return rbw_value
 
-    def read_level(self):
-        self.name.write("init1:cont ON")
-        time.sleep(1)
+    def read_level(self, f):
         self.name.write(":DISP:BARG:PHOL:RES")
-        time.sleep(2)
-        level = self.name.query("trac? single")
-        time.sleep(2)
-        return level
+        if str(self.name.query("DET:REC?")).strip() == "QPE":
+            print(f"Wykryto detektor {self.name.query('DET:REC?')}, jestem w pętli quasi-peak")
+            multiplier = 2
+            if f < 0.0001:
+                time.sleep(3 * multiplier)
+                level_tmp = self.name.query("trac? single")
+            elif 0.0001 <= f < 0.001:
+                time.sleep(2 * multiplier)
+                level_tmp = self.name.query("trac? single")
+            elif f >= 0.001:
+                time.sleep(1 * multiplier)
+                level_tmp = self.name.query("trac? single")
+            return level_tmp
+        elif str(self.name.query("DET:REC?")).strip() == "AVER":
+            print(f"Wykryto detektor {self.name.query('DET:REC?')}, jestem w pętli aver")
+            multiplier = 1
+            if f < 0.0001:
+                time.sleep(6 * multiplier)
+                level_tmp = self.name.query("trac? single")
+            elif 0.0001 <= f < 0.001:
+                time.sleep(1.5 * multiplier)
+                level_tmp = self.name.query("trac? single")
+            elif f >= 0.001:
+                time.sleep(0.5 * multiplier)
+                level_tmp = self.name.query("trac? single")
+            return level_tmp
+        else:
+            print(f"Wykryto detektor {self.name.query('DET:REC?')}, jestem w pętli peak")
+            if f < 0.0001:
+                time.sleep(6)
+                level_tmp = self.name.query("trac? single")
+            elif 0.0001 <= f < 0.001:
+                time.sleep(1)
+                level_tmp = self.name.query("trac? single")
+            elif f >= 0.001:
+                time.sleep(0.5)
+                level_tmp = self.name.query("trac? single")
+            return level_tmp
 
 
 class HMF2550:
@@ -140,30 +173,53 @@ def frequency_table(txt_file):
     return txt_file
 
 
-receiver = Receiver("TCPIP::169.254.10.77::inst0::INSTR", "ESR7")
+def result_file_name(name, result_list):
+    now = datetime.datetime.now()
+    year = str(now.year)
+    month = "%02d" % now.month
+    day = "%02d" % now.day
+    hour = "%02d" % now.hour
+    minute = "%02d" % now.minute
+    second = "%02d" % now.second
+    prefix_name = year + month + day + "_" + hour + minute + second + "_"
+    full_name_of_file = prefix_name + name + ".csv"
+    result_txt = open(f"C:\\Users\\bglowacz\\PycharmProjects\\Praca_IL-PIB\\pliki wynikowe txt\\{full_name_of_file}",
+                      "w")
+    result_txt.write(f"f [Hz];U [dBuV]\n")
+    for x in result_list:
+        result_txt.write(x.replace(".", ","))
+    result_txt.close()
+
+
+receiver = Receiver("TCPIP::172.29.10.158::inst0::INSTR", "ESR7")
 receiver.connect()
 receiver.IDN()
 receiver.detector()
 receiver.auto_attenuator()
-
 
 signalGenerator = HMF2550("ASRL5::INSTR", "HMF2550")
 signalGenerator.connect()
 signalGenerator.IDN()
 signalGenerator.HighImpedance_or_Xohm()
 signalGenerator.set_level()
-signalGenerator.set_single_frequency(1)  # w MHz
+# signalGenerator.set_single_frequency(1)  # w MHz
 signalGenerator.power_on_off("ON")
-receiver.set_Frequency(30)
-level = receiver.read_level()  # w MHz
-print(f"LEVEL: {level}")
+# receiver.set_Frequency(30)
+# print(f"LEVEL: {receiver.read_level()}")  # w MHz
 
-for f in frequency_table("frequencies_txt"):
-    print(f"f = {f}")
-    print(f"Częstotliwość generatora: {signalGenerator.set_single_frequency(f)} MHz")
+
+results = []
+for f in frequency_table("../frequencies_txt"):
+    freq = signalGenerator.set_single_frequency(f)
+    print(f"Częstotliwość generatora: {freq} MHz")
     receiver.sweep_time(float(f))
     receiver.input_coupling(f)
     receiver.set_Frequency(f)
-    print(f"Poziom na odbiorniku: {receiver.read_level()} dBμV")
-    time.sleep(1)
+    level = '{:.6f}'.format(float(receiver.read_level(f)))
+    print(f"Poziom na odbiorniku: {level} dBμV")
+    results.append(str(freq) + ";" + str(level) + "\n")
 signalGenerator.power_on_off("OFF")
+
+print("Nazwa pliku:")
+file_name = input()
+result_file_name(file_name, results)

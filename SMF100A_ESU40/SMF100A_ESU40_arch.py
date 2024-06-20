@@ -69,7 +69,7 @@ rm.list_resources()
 ESU40 = rm.open_resource('TCPIP::10.0.0.4::INSTR')
 print(f"Odbiornik:\n{ESU40.query('*IDN?')}")
 
-file = open('frequencies_txt', 'r')
+file = open('../frequencies_txt', 'r')
 frequency = file.read().splitlines()
 frequency_band_SMF = frequency_band_SMF(frequency)
 print(f"{frequency_band_SMF = }")

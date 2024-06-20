@@ -20,7 +20,7 @@ def set_level(level):
 
 # Przestawianie generatora na częstotliwościach podając plik txt z częstotliwościami.
 def set_frequency_from_file(frequency_list_formatted=[]):
-    file = open('frequencies_txt', 'r')
+    file = open('../frequencies_txt', 'r')
     frequency = file.read().splitlines()
     print(f"Częstotliwości wysłane na generator: {frequency} MHz")
     print("Podaj czas trwania [ms]: ")

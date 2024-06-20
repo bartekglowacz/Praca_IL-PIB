@@ -87,7 +87,7 @@ class SignalGenerator(Device):
 
 
 def set_frequency_band():
-    file = open("frequencies_txt", "r")
+    file = open("../frequencies_txt", "r")
     frequencies = file.readlines()
     frequencies = [float(freq.replace(",", ".")) for freq in frequencies]
     return frequencies

@@ -11,7 +11,6 @@ import time
 import pyvisa
 import SMF100A_preset
 import ESU40_preset
-import matplotlib.pyplot as draw
 
 
 # Funkcja do nadawania nazwy plikom wynikowym
@@ -29,7 +28,7 @@ def result_file_name(name_of_file):
 
 
 def set_frequency():
-    file = open('frequencies_txt', 'r')
+    file = open('../frequencies_txt', 'r')
     frequency = file.read().splitlines()
     frequency = [float(x.replace(",", ".")) for x in frequency]
     return frequency
