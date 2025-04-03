@@ -1,0 +1,3 @@
+Program ESW_HMF:
+1. Kolejna częstotliwość pomiarowa powinna być na tym tłumiku co poprzednio.
+2. Zmiana czułości (mniejsze BW, mniejsze tłumiki). Dodać możliwość ustawienia BW manualnie.

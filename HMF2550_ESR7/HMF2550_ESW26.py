@@ -97,13 +97,13 @@ class Receiver:
         else:
             print(f"Wykryto detektor {self.name.query('DET:REC?')}, jestem w pętli peak")
             if f < 0.0001:
-                time.sleep(6)
+                time.sleep(10)
                 level_tmp = self.name.query("trac? single")
             elif 0.0001 <= f < 0.001:
-                time.sleep(1)
+                time.sleep(2)
                 level_tmp = self.name.query("trac? single")
             elif f >= 0.001:
-                time.sleep(0.5)
+                time.sleep(2)
                 level_tmp = self.name.query("trac? single")
             return level_tmp
 
@@ -183,7 +183,7 @@ def result_file_name(name, result_list):
     second = "%02d" % now.second
     prefix_name = year + month + day + "_" + hour + minute + second + "_"
     full_name_of_file = prefix_name + name + ".csv"
-    result_txt = open(f"C:\\Users\\bglowacz\\PycharmProjects\\Praca_IL-PIB\\pliki wynikowe txt\\{full_name_of_file}",
+    result_txt = open(f"C:\\Users\\bglowacz\\PycharmProjects\\Praca IL-PIB\\pliki wynikowe txt\\{full_name_of_file}",
                       "w")
     result_txt.write(f"f [Hz];U [dBuV]\n")
     for x in result_list:
@@ -191,7 +191,7 @@ def result_file_name(name, result_list):
     result_txt.close()
 
 
-receiver = Receiver("TCPIP::172.29.10.158::inst0::INSTR", "ESR7")
+receiver = Receiver("TCPIP::169.254.6.226::inst0::INSTR", "ESR7")
 receiver.connect()
 receiver.IDN()
 receiver.detector()
@@ -202,6 +202,7 @@ signalGenerator.connect()
 signalGenerator.IDN()
 signalGenerator.HighImpedance_or_Xohm()
 signalGenerator.set_level()
+
 # signalGenerator.set_single_frequency(1)  # w MHz
 signalGenerator.power_on_off("ON")
 # receiver.set_Frequency(30)
@@ -209,7 +210,7 @@ signalGenerator.power_on_off("ON")
 
 
 results = []
-for f in frequency_table("../frequencies_txt"):
+for f in frequency_table("C:\\Users\\bglowacz\\PycharmProjects\\Praca IL-PIB\\HMF2550_ESR7/frequencies_txt"):
     freq = signalGenerator.set_single_frequency(f)
     print(f"Częstotliwość generatora: {freq} MHz")
     receiver.sweep_time(float(f))

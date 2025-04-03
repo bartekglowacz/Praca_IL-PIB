@@ -87,7 +87,7 @@ class SignalGenerator(Device):
 
 
 def set_frequency_band():
-    file = open("../frequencies_txt", "r")
+    file = open("frequencies_txt", "r")
     frequencies = file.readlines()
     frequencies = [float(freq.replace(",", ".")) for freq in frequencies]
     return frequencies
@@ -102,8 +102,8 @@ def result_file_name(name, result_list, header):
     minute = "%02d" % now.minute
     second = "%02d" % now.second
     prefix_name = year + month + day + "_" + hour + minute + second + "_"
-    full_name_of_file = prefix_name + name + ".txt"
-    result_txt = open(f"C:\\Users\\bglowacz\\PycharmProjects\\Praca_IL-PIB\\pliki wynikowe txt\\{full_name_of_file}",
+    full_name_of_file = prefix_name + name + ".csv"
+    result_txt = open(f"C:\\Users\\bglowacz\\PycharmProjects\\Praca IL-PIB\\pliki wynikowe txt\\{full_name_of_file}",
                       "w")
     result_txt.write(f"f [Hz];U [{header}]\n")
     for x in result_list:
