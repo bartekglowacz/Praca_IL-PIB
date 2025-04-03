@@ -105,5 +105,5 @@ VNA.idn()
 VNA.set_Sparameters()
 VNA.set_format()
 VNA.frequency_range()
-for i in range(0, 18):
-    VNA.get_trace()
+# for i in range(0, 18):
+#     VNA.get_trace()
