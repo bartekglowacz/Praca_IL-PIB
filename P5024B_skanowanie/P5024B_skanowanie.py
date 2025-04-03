@@ -97,6 +97,12 @@ class VNA:
     def get_trace(self):  # dodanie nowego trace'a
         self.name.write("calc:meas:math:new 0,act")
 
+class Mast:
+    def set_hight_step(self):
+        print("Jaki krok zmiany wysokości [cm]?")
+        step = input()
+        for h in range(1, 4, step):
+            print(f"Jestem na wysokości {h+step}")
 
 # VNA = VNA("TCPIP::169.254.140.230::5025::SOCKET", "P5024B")
 VNA = VNA("TCPIP::169.254.140.230::hislip1::INSTR", "P5024B")
