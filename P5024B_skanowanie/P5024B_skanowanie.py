@@ -13,10 +13,10 @@ class VNA:
         rm.list_resources()
         self.name = rm.open_resource(self.address)
         # self.name.timeout = 1000
-        self.name.write("*RST")
         return self.name
 
     def idn(self):
+        self.name.write("*RST")
         print(f"Dane podłączonego urządzenia: {self.name.query('*IDN?')}")
 
     def set_Sparameters(self):  # ustawianie mierzonego parametru S
@@ -94,11 +94,66 @@ class VNA:
 
         # krok zmienny
         elif choice == 2:
+            print("Ile podzakresów będzie?")
+            ranges_number = int(input())
+            for i in range(0, ranges_number):
+                print("Podaj częstotliwość początkową:")
+                f_start = input()
+                if f_start.endswith("k"):
+                    f_start = float(f_start.rstrip("k").replace(",", ".")) * 1000
+                elif f_start.endswith("M"):
+                    f_start = float(f_start.rstrip("M").replace(",", ".")) * 1000000
+                elif f_start.endswith("G"):
+                    f_start = float(f_start.rstrip("G").replace(",", ".")) * 1000000000
+                else:
+                    print("Zjebałeś")
+                print(f"start = {f_start / 1000000} MHz")
+
+                print("Podaj koniec zakresu:")
+                f_end = input()
+                if f_end.endswith("k"):
+                    f_end = float(f_end.rstrip("k").replace(",", ".")) * 1000
+                elif f_end.endswith("M"):
+                    f_end = float(f_end.rstrip("M").replace(",", ".")) * 1000000
+                elif f_end.endswith("G"):
+                    f_end = float(f_end.rstrip("G").replace(",", ".")) * 1000000000
+                else:
+                    print("Zjebałeś")
+                print(f"koniec = {f_end / 1000000} MHz")
+
+                print("Podaj krok częstotliwości:")
+                f_step = input()
+                if f_step.endswith("k"):
+                    f_step = float(f_step.rstrip("k").replace(",", ".")) * 1000
+                elif f_step.endswith("M"):
+                    f_step = float(f_step.rstrip("M").replace(",", ".")) * 1000000
+                elif f_step.endswith("G"):
+                    f_step = float(f_step.rstrip("G").replace(",", ".")) * 1000000000
+                else:
+                    f_step = float(f_step)
+                print(f"krok = {f_step / 1000000} MHz")
+
+                print("Podaj szerokość filtra BW:")
+                f_BW = input()
+                if f_BW.endswith("k"):
+                    f_BW = float(f_BW.rstrip("k").replace(",", ".")) * 1000
+                elif f_BW.endswith("M"):
+                    f_BW = float(f_BW.rstrip("M").replace(",", ".")) * 1000000
+                elif f_BW.endswith("G"):
+                    f_BW = float(f_BW.rstrip("G").replace(",", ".")) * 1000000000
+                else:
+                    f_BW = float(f_BW)
+                print(f"BW = {f_BW / 1000000} MHz")
+
+                print("Podaj moc portu generującego:")
+                power = input()
+                self.name.write(f"sour:pow:lev:imm:ampl {power}")
+
             self.name.write("sens:swe:type segm")
+            self.name.write("sens:segm:del")
             self.name.write("sens:segm:add")
             self.name.write("sens:segm:add")
-            self.name.write("sens:segm:add")
-            self.name.write("sens:segm:add")
+            self.name.write("sens:swe:type segm")
 
         else:
             print("Gówno")
