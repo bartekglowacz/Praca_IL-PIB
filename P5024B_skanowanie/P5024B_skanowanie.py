@@ -1,3 +1,5 @@
+import time
+
 import pyvisa
 
 
@@ -29,6 +31,7 @@ class VNA:
     def frequency_range(self):  # ustawienie zakresu częstotliwości
         print("1 - stały krok częstotliwości\n2 - tablica częstotliwości")
         choice = int(input())
+        # krok stały
         if choice == 1:
             self.name.write("sens:swe:type lin")
 
@@ -89,27 +92,53 @@ class VNA:
             power = input()
             self.name.write(f"sour:pow:lev:imm:ampl {power}")
 
+        # krok zmienny
         elif choice == 2:
-            self.name.write("sens:swe:type seg")
+            self.name.write("sens:swe:type segm")
+            self.name.write("sens:segm:add")
+            self.name.write("sens:segm:add")
+            self.name.write("sens:segm:add")
+            self.name.write("sens:segm:add")
+
         else:
             print("Gówno")
 
     def get_trace(self):  # dodanie nowego trace'a
         self.name.write("calc:meas:math:new 0,act")
 
+    def save_file(self):
+        print("Podaj ścieżkę do zapisu: ")
+        path = input().replace("\\", "\\\\")
+        print(f"ścieżka to: {path}")
+        print("Wpisz nazwę pliku: ")
+        name = input()
+        path_name = path + "\\\\" + name + ".csv"
+        print(f"Plik: {path_name}")
+        self.name.write(f"mmem:store:data:ext '{path_name}', ""'csv trace','Displayed','Displayed',-1")
+
+
 class Mast:
-    def set_hight_step(self):
-        print("Jaki krok zmiany wysokości [cm]?")
-        step = input()
-        for h in range(1, 4, step):
-            print(f"Jestem na wysokości {h+step}")
+
+    def IDN(self):
+        print("Jestem masztem!")
+    def set_hight_step(self, h):
+        print(f"Jestem na wysokości {h} cm")
+
 
 # VNA = VNA("TCPIP::169.254.140.230::5025::SOCKET", "P5024B")
 VNA = VNA("TCPIP::169.254.140.230::hislip1::INSTR", "P5024B")
 VNA.connect()
+Mast = Mast()
+Mast.IDN()
 VNA.idn()
 VNA.set_Sparameters()
 VNA.set_format()
 VNA.frequency_range()
-for i in range(0, 18):
+
+print("Jaki krok zmiany wysokości [cm]?")
+step = int(input())
+for h in range(100, 400+step, step):
+    Mast.set_hight_step(h)
     VNA.get_trace()
+    time.sleep(2)
+VNA.save_file()
