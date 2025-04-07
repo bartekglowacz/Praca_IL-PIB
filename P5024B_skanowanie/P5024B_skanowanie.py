@@ -176,6 +176,10 @@ class Mast:
 
     def IDN(self):
         print("Jestem masztem!")
+
+    def set_polarization(self, polarization):
+        pass
+
     def set_hight_step(self, h):
         print(f"Jestem na wysokości {h} cm")
 
@@ -190,9 +194,12 @@ VNA.set_Sparameters()
 VNA.set_format()
 VNA.frequency_range()
 
+print("Jaka polaryzacja?\nH - pozioma\nV - pionowa")
+polarization = input()
+Mast.set_polarization(polarization)
 print("Jaki krok zmiany wysokości [cm]?")
 step = int(input())
-for h in range(100, 400+step, step):
+for h in range(100, 400 + step, step):
     Mast.set_hight_step(h)
     VNA.get_trace()
     time.sleep(2)
