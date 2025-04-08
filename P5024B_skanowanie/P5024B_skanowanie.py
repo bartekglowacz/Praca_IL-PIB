@@ -174,8 +174,19 @@ class VNA:
 
 class Mast:
 
-    def IDN(self):
-        print("Jestem masztem!")
+    def __init__(self, address, name):
+        self.address = address
+        self.name = name
+
+    def connect(self):
+        rm = pyvisa.ResourceManager()
+        rm.list_resources()
+        self.name = rm.open_resource(self.address)
+        # self.name.timeout = 1000
+        return self.name
+
+    def idn(self):
+        print(f"Dane podłączonego urządzenia: {self.name.query('*IDN?')}")
 
     def set_polarization(self, polarization):
         pass
@@ -186,21 +197,23 @@ class Mast:
 
 # VNA = VNA("TCPIP::169.254.140.230::5025::SOCKET", "P5024B")
 VNA = VNA("TCPIP::169.254.140.230::hislip1::INSTR", "P5024B")
-VNA.connect()
-Mast = Mast()
-Mast.IDN()
-VNA.idn()
-VNA.set_Sparameters()
-VNA.set_format()
-VNA.frequency_range()
+Mast = Mast("TCPIP::172.16.0.76::200::SOCKET", "BAM")
+# VNA.connect()
+# VNA.idn()
+# VNA.set_Sparameters()
+# VNA.set_format()
+# VNA.frequency_range()
 
-print("Jaka polaryzacja?\nH - pozioma\nV - pionowa")
-polarization = input()
-Mast.set_polarization(polarization)
-print("Jaki krok zmiany wysokości [cm]?")
-step = int(input())
-for h in range(100, 400 + step, step):
-    Mast.set_hight_step(h)
-    VNA.get_trace()
-    time.sleep(2)
-VNA.save_file()
+Mast.connect()
+Mast.idn()
+
+# print("Jaka polaryzacja?\nH - pozioma\nV - pionowa")
+# polarization = input()
+# Mast.set_polarization(polarization)
+# print("Jaki krok zmiany wysokości [cm]?")
+# step = int(input())
+# for h in range(100, 400 + step, step):
+#     Mast.set_hight_step(h)
+#     VNA.get_trace()
+#     time.sleep(2)
+# VNA.save_file()
