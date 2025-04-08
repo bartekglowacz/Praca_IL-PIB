@@ -186,7 +186,7 @@ class Mast:
         return self.name
 
     def idn(self):
-        print(f"Dane podłączonego urządzenia: {self.name.query('*IDN?')}")
+        print(f"Dane podłączonego urządzenia!: {self.name.query('*IDN?')}")
 
     def set_polarization(self, polarization):
         pass
