@@ -3,7 +3,42 @@ import time
 import pyvisa
 
 
-class Receiver:
+class SMF100A:
+    def __init__(self, address, name):
+        self.address = address
+        self.name = name
+
+    def connect(self):
+        rm = pyvisa.ResourceManager()
+        rm.list_resources()
+        self.name = rm.open_resource(self.address)
+        # self.name.timeout = 10000
+        self.name.write("*RST")
+        self.name.write("OUTP:AMOD AUTO")
+        return self.name
+
+    def idn(self):
+        print(f"Dane podłączonego urządzenia: {self.name.query('*IDN?')}")
+
+    def power_on_off(self, mode):
+        self.name.write(f"OUTP {mode}")
+
+    def select_unit(self, unit):
+        self.name.write(f"UNIT:POW {unit}")
+        return str(unit)
+
+    def which_unit(self):
+        return self.name.query("UNIT:POW?")
+
+    def set_level(self, level):
+        self.name.write(f":POW {level}")
+
+    def set_frequency(self, f):
+        self.name.write(f"FREQ {f} MHz")
+        return f
+
+
+class ESW:
     def __init__(self, address, name):
         self.address = address
         self.name = name
@@ -16,7 +51,7 @@ class Receiver:
         self.name.write("*RST")
         return self.name
 
-    def IDN(self):
+    def idn(self):
         print(f"Dane podłączonego urządzenia: {self.name.query('*IDN?')}")
 
     def set_Frequency(self, frequency):  # frequency in MHz
@@ -103,74 +138,59 @@ class Receiver:
                 time.sleep(2)
                 level_tmp = self.name.query("trac? single")
             elif f >= 0.001:
-                time.sleep(2)
+                time.sleep(0.5)
                 level_tmp = self.name.query("trac? single")
             return level_tmp
 
 
-class HMF2550:
-    def __init__(self, address, name):
-        self.address = address
-        self.name = name
+ESW = ESW("TCPIP::169.254.10.77::inst0::INSTR", "ESW")
+ESW.connect()
+ESW.idn()
 
-    def connect(self):
-        rm = pyvisa.ResourceManager()
-        rm.list_resources()
-        self.name = rm.open_resource(self.address)
-        self.name.write("*RST")
-        return self.name
+SMF100A = SMF100A("TCPIP::169.254.10.80::inst0::INSTR", "SMF100A")
+SMF100A.connect()
+SMF100A.idn()
 
-    def IDN(self):
-        print(f"Dane podłączonego urządzenia: {self.name.query('*IDN?')}")
+print("Wybierz jednostkę generatora\n1 - dBuV\n2 - dBm\n3 - V")
+choice = int(input())
+if choice == 1:
+    SMF100A.select_unit("dBuV")
+elif choice == 2:
+    SMF100A.select_unit("dBm")
+elif choice == 3:
+    SMF100A.select_unit("V")
+else:
+    print("Niepoprawny wybór")
 
-    def power_on_off(self, mode):  # ON or OFF
-        self.name.write(f"OUTP {mode.upper()}")
 
-    def HighImpedance_or_Xohm(self):
-        print("Podaj impedancję generatora\nDla trybu High Impedance wpisz ""H""")
-        impedanceValue = input().upper()
-        if impedanceValue == "H":
-            self.name.write(f"OUTPut:LOAD INF")
-        elif impedanceValue.isnumeric():
-            self.name.write(f"OUTPut:LOAD {impedanceValue}")
-        else:
-            print("Nieprawidłowy wybór")
-            exit()
-
-    def set_level(self):
-        print("Opcje:\n1 - V\n2 - dBm")
-        choice = int(input())
-        if choice == 1:
-            self.name.write("VOLT:UNIT VOLT")
-            print("Podaj poziom generatora")
-            genLevel = float(input())
-            self.name.write(f":VOLT {genLevel}")
-            print(f"Poziom generatora: {genLevel} V")
-        elif choice == 2:
-            self.name.write("VOLT:UNIT DBM")
-            print("Podaj poziom generatora")
-            genLevel = float(input())
-            self.name.write(f":VOLT {genLevel}")
-            print(f"Poziom generatora: {genLevel} dBm")
-        else:
-            print("Nieprawidłowy wybór")
-
-    def set_single_frequency(self, f):  # w Hz!
-        self.name.write(f"FREQ {f * pow(10, 6)}")
-        return f
+print("Podaj poziom generatora:")
+choice = float(str(input()).replace(",", "."))
+SMF100A.set_level(choice)
 
 
 def frequency_table(txt_file):
-    print("1 - częstotliwości podane w Hz\n2 - częstotlwiości podane w MHz")
-    choice = int(input())
-    if choice == 1:
-        txt_file = open(txt_file, "r")
-        txt_file = [float(f.replace(",", ".")) / pow(10, 6) for f in txt_file]  # displayed in MHz
-    elif choice == 2:
-        txt_file = open(txt_file, "r")
-        txt_file = [float(f.replace(",", ".")) for f in txt_file]  # displayed in MHz
-    # print(txt_file)
+    txt_file = open(txt_file, "r")
+    txt_file = [float(f.replace(",", ".")) for f in txt_file]  # displayed in MHz
     return txt_file
+
+
+# print("Podaj częstotliwość:")
+# choice = float(str(input()).replace(",", "."))
+# SMF100A.set_frequency(choice)
+
+results = []
+# Zrobić przypadki dla poziomu w dBm i V, bo zapisuje tylko dBuV!
+for f in frequency_table("frequencies_txt"):
+    SMF100A.power_on_off("ON")
+    freq = SMF100A.set_frequency(f)
+    print(f"Częstotliwość generatora: {freq} MHz")
+    ESW.sweep_time(float(f))
+    ESW.input_coupling(f)
+    ESW.set_Frequency(f)
+    level = '{:.6f}'.format(float(ESW.read_level(f)))
+    print(f"Poziom na odbiorniku: {level} dBμV")
+    results.append(str(freq) + ";" + str(level) + "\n")
+SMF100A.power_on_off("OFF")
 
 
 def result_file_name(name, result_list):
@@ -185,40 +205,10 @@ def result_file_name(name, result_list):
     full_name_of_file = prefix_name + name + ".csv"
     result_txt = open(f"C:\\Users\\bglowacz\\PycharmProjects\\Praca IL-PIB\\pliki wynikowe txt\\{full_name_of_file}",
                       "w")
-    result_txt.write(f"f [Hz];U [dBuV]\n")
+    result_txt.write(f"f [MHz];U [{SMF100A.which_unit()}]\n")
     for x in result_list:
         result_txt.write(x.replace(".", ","))
     result_txt.close()
-
-
-receiver = Receiver("TCPIP::169.254.6.226::inst0::INSTR", "ESR7")
-receiver.connect()
-receiver.IDN()
-receiver.detector()
-receiver.auto_attenuator()
-signalGenerator = HMF2550("ASRL5::INSTR", "HMF2550")
-signalGenerator.connect()
-signalGenerator.IDN()
-signalGenerator.HighImpedance_or_Xohm()
-signalGenerator.set_level()
-
-# signalGenerator.set_single_frequency(1)  # w MHz
-signalGenerator.power_on_off("ON")
-# receiver.set_Frequency(30)
-# print(f"LEVEL: {receiver.read_level()}")  # w MHz
-
-
-results = []
-for f in frequency_table("C:\\Users\\bglowacz\\PycharmProjects\\Praca IL-PIB\\HMF2550_ESR7/frequencies_txt"):
-    freq = signalGenerator.set_single_frequency(f)
-    print(f"Częstotliwość generatora: {freq} MHz")
-    receiver.sweep_time(float(f))
-    receiver.input_coupling(f)
-    receiver.set_Frequency(f)
-    level = '{:.6f}'.format(float(receiver.read_level(f)))
-    print(f"Poziom na odbiorniku: {level} dBμV")
-    results.append(str(freq) + ";" + str(level) + "\n")
-signalGenerator.power_on_off("OFF")
 
 print("Nazwa pliku:")
 file_name = input()
