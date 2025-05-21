@@ -91,15 +91,29 @@ class ESW:
             sweep_time = 0.05
         elif 120000 / pow(10, 6) <= f < 1000000000 / pow(10, 6):
             sweep_time = 0.01
-        elif 1000000000 / pow(10, 6) <= f < 7000000000 / pow(10, 6):
+        elif 1000000000 / pow(10, 6) <= f <= 40000000000 / pow(10, 6):
             sweep_time = 0.01
         self.name.write(f"SWE:TIME {sweep_time}s")
         return sweep_time
 
     def read_RBW(self):
         rbw_value = self.name.query('BAND?')
-        print(f"RBW: {rbw_value}")
         return rbw_value
+
+    def set_RBW(self, resolution):
+        self.name.write(f"BAND {resolution}")
+
+    def read_mt(self):
+        mt = self.name.query("SWE:TIME?")
+        return mt
+
+    def set_mt(self, meas_time):
+        self.name.write(f"SWE:TIME {meas_time}")
+
+    def read_level_const_meas_time(self, f, mt):
+        time.sleep(mt*1.5)
+        level_const_meas_time = self.name.query("trac? single")
+        return level_const_meas_time
 
     def read_level(self, f):
         self.name.write(":DISP:BARG:PHOL:RES")
@@ -143,11 +157,11 @@ class ESW:
             return level_tmp
 
 
-ESW = ESW("TCPIP::169.254.10.77::inst0::INSTR", "ESW")
+ESW = ESW("TCPIP::172.29.10.165::inst0::INSTR", "ESW")
 ESW.connect()
 ESW.idn()
 
-SMF100A = SMF100A("TCPIP::169.254.10.80::inst0::INSTR", "SMF100A")
+SMF100A = SMF100A("TCPIP::172.29.10.148::inst0::INSTR", "SMF100A")
 SMF100A.connect()
 SMF100A.idn()
 
@@ -180,18 +194,43 @@ def frequency_table(txt_file):
 
 results = []
 # Zrobić przypadki dla poziomu w dBm i V, bo zapisuje tylko dBuV!
-for f in frequency_table("frequencies_txt"):
-    SMF100A.power_on_off("ON")
-    freq = SMF100A.set_frequency(f)
-    print(f"Częstotliwość generatora: {freq} MHz")
-    ESW.sweep_time(float(f))
-    ESW.input_coupling(f)
-    ESW.set_Frequency(f)
-    level = '{:.6f}'.format(float(ESW.read_level(f)))
-    print(f"Poziom na odbiorniku: {level} dBμV")
-    results.append(str(freq) + ";" + str(level) + "\n")
-SMF100A.power_on_off("OFF")
-
+print("Wpisz szerokość RBW w Hz")
+rbw_resolution = input()
+ESW.set_RBW(rbw_resolution)
+print("1 - automatyczny czas pomiaru\n2 - zdefiniowany czas pomiaru")
+choice = int(input())
+if choice == 1:
+    for f in frequency_table("frequencies_txt"):
+        SMF100A.power_on_off("ON")
+        freq = SMF100A.set_frequency(f)
+        print(f"Częstotliwość generatora: {freq} MHz")
+        ESW.sweep_time(float(f))
+        ESW.input_coupling(f)
+        ESW.set_Frequency(f)
+        level = '{:.6f}'.format(float(ESW.read_level(f)))
+        print(f"Poziom na odbiorniku: {level} dBμV")
+        print(f"RBW = {ESW.read_RBW()}")
+        print(f"Czas pomiaru = {ESW.read_mt()}")
+        results.append(str(freq) + ";" + str(level) + "\n")
+    SMF100A.power_on_off("OFF")
+elif choice == 2:
+    print("Podaj czas pomiaru")
+    meas_time = float(input())
+    for f in frequency_table("frequencies_txt"):
+        SMF100A.power_on_off("ON")
+        freq = SMF100A.set_frequency(f)
+        print(f"Częstotliwość generatora: {freq} MHz")
+        ESW.set_mt(meas_time)
+        ESW.input_coupling(f)
+        ESW.set_Frequency(f)
+        level = '{:.6f}'.format(float(ESW.read_level_const_meas_time(f, meas_time)))
+        print(f"Poziom na odbiorniku: {level} dBμV")
+        print(f"RBW = {ESW.read_RBW()}")
+        print(f"Czas pomiaru = {ESW.read_mt()}")
+        results.append(str(freq) + ";" + str(level) + "\n")
+    SMF100A.power_on_off("OFF")
+else:
+    print("Niefortunny wybór milordzie")
 
 def result_file_name(name, result_list):
     now = datetime.datetime.now()
@@ -203,7 +242,7 @@ def result_file_name(name, result_list):
     second = "%02d" % now.second
     prefix_name = year + month + day + "_" + hour + minute + second + "_"
     full_name_of_file = prefix_name + name + ".csv"
-    result_txt = open(f"C:\\Users\\bglowacz\\PycharmProjects\\Praca IL-PIB\\pliki wynikowe txt\\{full_name_of_file}",
+    result_txt = open(f"C:\\Users\\Lenovo\\PycharmProjects\\Praca_IL-PIB\\pliki wynikowe txt\\{full_name_of_file}",
                       "w")
     result_txt.write(f"f [MHz];U [{SMF100A.which_unit()}]\n")
     for x in result_list:
