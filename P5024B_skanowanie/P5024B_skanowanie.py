@@ -1,4 +1,5 @@
 import time
+import BAM4_5_P
 
 import pyvisa
 
