@@ -1,50 +1,68 @@
+import datetime
 import socket
 import time
 
+
 class Mast:
-    def __init__(self, ip, port, timeout=2):
+    def __init__(self, ip, port, buffer, delay):
         self.ip = ip
         self.port = port
-        self.timeout = timeout
+        self.buffer = buffer
+        self.delay = delay
         self.sock = None
 
-    def connect(self):
+    def write(self, cmd):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.settimeout(self.timeout)
         self.sock.connect((self.ip, self.port))
+        self.sock.send(cmd.encode())
+        # print(datetime.datetime.now().time(), "Sent: ", cmd)
+        time.sleep(self.delay)
+        self.sock.close()
 
-    def send_command(self, command):
-        # Wysyła komendę z bajtem 0x00 na końcu
-        self.sock.sendall(command.encode() + b'\x00')
+    def query(self, cmd):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect((self.ip, self.port))
+        self.sock.send(cmd.encode())
+        data = self.sock.recv(self.buffer)
+        value = data.decode("utf-8")
+        value = value[:-1]
+        # print(datetime.datetime.now().time(), "sent: ", cmd)
+        # print(datetime.datetime.now().time(), "Receive: ", value)
+        self.sock.close()
+        return value
 
-    def receive_response(self):
-        data = b''
+bam = Mast("172.16.0.76", 200, 1024, 0.1)
+bam.query("*IDN?")
+
+def defining_preset():
+    bam.write("LD 0 DV")
+    bam.write("LD 35 SF")
+    print(f"Pozycja masztu: {bam.query("RP")} cm")
+
+def moving_mast():
+    bam.write(f"LD 100 CM NP GO")
+    start_position = float(input("Podaj pozycję startową: "))
+    end_position = float(input("Podaj pozycję końcową: "))
+    step = float(input("Podaj krok: "))
+    # time.sleep(3)
+    print(f"Pozycja masztu: {bam.query("RP")} cm")
+    while start_position <= end_position:
+        bam.write(f"LD {start_position} CM NP GO")
+        start_position += step
+
         while True:
-            try:
-                chunk = self.sock.recv(1024)
-                data += chunk
-                if not chunk or chunk.endswith(b'\x00'):
-                    break
-            except socket.timeout:
+
+            bu = bam.query("BU")
+            if bu == "1":
                 break
-        return data.rstrip(b'\x00').decode(errors='ignore')
+        while True:
+            bu = bam.query("BU")
+            bam.query("RP")
+            if bu == "0":
+                break
+        print(f"Pozycja masztu: {bam.query("RP")} cm")
 
-    def query(self, command):
-        self.send_command(command)
-        time.sleep(0.1)  # mała pauza dla urządzenia
-        return self.receive_response()
+defining_preset()
+moving_mast()
 
-    def idn(self):
-        self.send_command("*RST")
-        print("Dane podłączonego urządzenia:", self.query("*IDN?"))
 
-    def close(self):
-        if self.sock:
-            self.sock.close()
-            self.sock = None
-
-bam = Mast("172.16.0.76", 200)
-bam.connect()
-bam.idn()
-bam.close()
-#
