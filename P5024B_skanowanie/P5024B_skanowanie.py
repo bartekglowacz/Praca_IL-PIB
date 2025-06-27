@@ -162,7 +162,7 @@ class VNA:
     def get_trace(self):  # dodanie nowego trace'a
         self.name.write("calc:meas:math:new 0,act")
         self.name.write("DISP:WIND:TRAC:Y:AUTO")
-    #     dopisać coś żeby pozwolił przelecieć całe pasmo
+    #     dopisać coś żeby pozwolił przelecieć całe pasmo!
 
 
     def save_file(self):
