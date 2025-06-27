@@ -161,6 +161,9 @@ class VNA:
 
     def get_trace(self):  # dodanie nowego trace'a
         self.name.write("calc:meas:math:new 0,act")
+        self.name.write("DISP:WIND:TRAC:Y:AUTO")
+    #     dopisać coś żeby pozwolił przelecieć całe pasmo
+
 
     def save_file(self):
         print("Podaj ścieżkę do zapisu: ")
@@ -173,48 +176,32 @@ class VNA:
         self.name.write(f"mmem:store:data:ext '{path_name}', ""'csv trace','Displayed','Displayed',-1")
 
 
-class Mast:
-
-    def __init__(self, address, name):
-        self.address = address
-        self.name = name
-
-    def connect(self):
-        rm = pyvisa.ResourceManager()
-        rm.list_resources()
-        self.name = rm.open_resource(self.address)
-        # self.name.timeout = 1000
-        return self.name
-
-    def idn(self):
-        print(f"Dane podłączonego urządzenia: {self.name.query('*IDN?')}")
-
-    def set_polarization(self, polarization):
-        pass
-
-    def set_hight_step(self, h):
-        print(f"Jestem na wysokości {h} cm")
-
-
 # VNA = VNA("TCPIP::169.254.140.230::5025::SOCKET", "P5024B")
-VNA = VNA("TCPIP::169.254.140.230::hislip1::INSTR", "P5024B")
-Mast = Mast("TCPIP::172.16.0.76::200::SOCKET", "BAM")
-# VNA.connect()
-# VNA.idn()
-# VNA.set_Sparameters()
-# VNA.set_format()
-# VNA.frequency_range()
+VNA = VNA("TCPIP::172.16.0.77::hislip1::INSTR", "P5024B")
+VNA.connect()
+VNA.idn()
+VNA.set_Sparameters()
+VNA.set_format()
+VNA.frequency_range()
 
-Mast.connect()
-Mast.idn()
+BAM4_5_P.defining_preset()
 
-# print("Jaka polaryzacja?\nH - pozioma\nV - pionowa")
-# polarization = input()
-# Mast.set_polarization(polarization)
-# print("Jaki krok zmiany wysokości [cm]?")
-# step = int(input())
-# for h in range(100, 400 + step, step):
-#     Mast.set_hight_step(h)
-#     VNA.get_trace()
-#     time.sleep(2)
-# VNA.save_file()
+
+# Ruch masztu i odczyt z VNA
+start_position = float(input("Podaj pozycję startową: "))
+end_position = float(input("Podaj pozycję końcową: "))
+step = float(input("Podaj krok: "))
+
+while start_position <= end_position:
+    BAM4_5_P.moving_mast(start_position, end_position, step)
+    VNA.get_trace()  # dodać komendę, która odpyta czy poszedł cały sweep
+    start_position += step
+    while True:
+        bu = BAM4_5_P.bam.query("BU")
+        if bu == "1":
+            break
+    while True:
+        bu = BAM4_5_P.bam.query("BU")
+        BAM4_5_P.bam.query("RP")
+        if bu == "0":
+            break

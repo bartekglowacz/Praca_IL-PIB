@@ -38,7 +38,6 @@ bam.query("*IDN?")
 def defining_preset():
     bam.write("LD 0 DV") # 0 - ustawienie masztu jako urządzenia sterowanego
     bam.write("LD 35 SF") # prędkość masztu [cm/s]
-    bam.write("LD 100 CM NP GO")
     print(f"Pozycja masztu: {bam.query("RP")} cm")
     polarization = input("Jaka polaryzacja?\nH - pozioma\nV - pionowa \n").upper()
     if polarization == "H":
@@ -48,10 +47,28 @@ def defining_preset():
     else:
         print("Zjebano coś")
 
-def moving_mast(start_position, end_position, step):
-    bam.write(f"LD {start_position} CM NP GO")
+def moving_mast():
+    # bam.write(f"LD 100 CM NP GO")
+    start_position = float(input("Podaj pozycję startową: "))
+    end_position = float(input("Podaj pozycję końcową: "))
+    step = float(input("Podaj krok: "))
+    # time.sleep(3)
     print(f"Pozycja masztu: {bam.query("RP")} cm")
+    while start_position <= end_position:
+        bam.write(f"LD {start_position} CM NP GO")
+        start_position += step
 
+        while True:
+
+            bu = bam.query("BU")
+            if bu == "1":
+                break
+        while True:
+            bu = bam.query("BU")
+            bam.query("RP")
+            if bu == "0":
+                break
+        print(f"Pozycja masztu: {bam.query("RP")} cm")
 
 if __name__ == "__main__":
     defining_preset()
