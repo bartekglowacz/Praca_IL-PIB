@@ -3,6 +3,7 @@ import socket
 import time
 
 
+# Musi być włączona aplikacja Maturo i masz w niej podłączony!!!
 class Mast:
     def __init__(self, ip, port, buffer, delay):
         self.ip = ip
@@ -35,12 +36,19 @@ bam = Mast("172.16.0.76", 200, 1024, 0.1)
 bam.query("*IDN?")
 
 def defining_preset():
-    bam.write("LD 0 DV")
-    bam.write("LD 35 SF")
+    bam.write("LD 0 DV") # 0 - ustawienie masztu jako urządzenia sterowanego
+    bam.write("LD 35 SF") # prędkość masztu [cm/s]
     print(f"Pozycja masztu: {bam.query("RP")} cm")
+    polarization = input("Jaka polaryzacja?\nH - pozioma\nV - pionowa \n").upper()
+    if polarization == "H":
+        bam.write("PH")
+    elif polarization == "V":
+        bam.write("PV")
+    else:
+        print("Zjebano coś")
 
 def moving_mast():
-    bam.write(f"LD 100 CM NP GO")
+    # bam.write(f"LD 100 CM NP GO")
     start_position = float(input("Podaj pozycję startową: "))
     end_position = float(input("Podaj pozycję końcową: "))
     step = float(input("Podaj krok: "))
